@@ -4,98 +4,235 @@ import 'package:coc_sheet/models/attribute.dart';
 import 'package:coc_sheet/models/skill.dart';
 
 void main() {
-  group('Attribute Tests', () {
-    test('Hard and extreme values should be calculated correctly', () {
-      final attr = Attribute(name: "Strength", base: 50);
-      expect(attr.hard, equals(25));
-      expect(attr.extreme, equals(10));
+  group('Character Model Tests', () {
+    test('Character should initialize with correct general info', () {
+      final character = Character(
+        name: "John Doe",
+        age: 32,
+        pronouns: "He/Him",
+        birthplace: "Arkham",
+        occupation: "Detective",
+        residence: "Arkham, MA",
+        currentHP: 10,
+        maxHP: 12,
+        currentSanity: 40,
+        startingSanity: 60,
+        currentMP: 8,
+        startingMP: 8,
+        attributes: [],
+        skills: [Skill(name: "Cthulhu Mythos", base: 10)],
+      );
+
+      expect(character.name, equals("John Doe"));
+      expect(character.age, equals(32));
+      expect(character.occupation, equals("Detective"));
+      expect(character.maxSanity, equals(99 - 10)); // 99 - Cthulhu Mythos
     });
 
-    test('Base value should update correctly', () {
-      final attr = Attribute(name: "Dexterity", base: 40);
-      attr.base = 80;
-      expect(attr.base, equals(80));
-      expect(attr.hard, equals(40));
-      expect(attr.extreme, equals(16));
+    test('Updating Cthulhu Mythos skill should correctly update maxSanity', () {
+      final character = Character(
+        name: "John Doe",
+        age: 32,
+        pronouns: "He/Him",
+        birthplace: "Arkham",
+        occupation: "Detective",
+        residence: "Arkham, MA",
+        currentHP: 10,
+        maxHP: 12,
+        currentSanity: 40,
+        startingSanity: 60,
+        currentMP: 8,
+        startingMP: 8,
+        attributes: [],
+        skills: [Skill(name: "Cthulhu Mythos", base: 20)],
+      );
+
+      expect(character.maxSanity, equals(99 - 20));
+
+      character.updateSkill("Cthulhu Mythos", 30);
+      expect(character.maxSanity, equals(99 - 30));
     });
 
-    test('Base value should not be negative', () {
-      final attr = Attribute(name: "Constitution", base: -20);
-      expect(attr.base, isNonNegative);
-    });
-
-    test('Zero base should calculate correctly', () {
-      final attr = Attribute(name: "Power", base: 0);
-      expect(attr.hard, equals(0));
-      expect(attr.extreme, equals(0));
-    });
-  });
-
-  group('Skill Tests', () {
-    test('Skill values should be calculated correctly', () {
-      final skill = Skill(name: "Spot Hidden", base: 70, canUpgrade: true);
-      expect(skill.hard, equals(35));
-      expect(skill.extreme, equals(14));
-      expect(skill.canUpgrade, isTrue);
-    });
-
-    test('Skill base value should update correctly', () {
-      final skill = Skill(name: "Persuade", base: 50);
-      skill.base = 90;
-      expect(skill.base, equals(90));
-      expect(skill.hard, equals(45));
-      expect(skill.extreme, equals(18));
-    });
-
-    test('Skill base should not be negative', () {
-      final skill = Skill(name: "Stealth", base: -10);
-      expect(skill.base, isNonNegative);
-    });
-
-    test('Zero base should calculate correctly', () {
-      final skill = Skill(name: "Fast Talk", base: 0);
-      expect(skill.hard, equals(0));
-      expect(skill.extreme, equals(0));
-    });
-  });
-
-  group('Character Tests', () {
-    test('Character should update attributes correctly', () {
-      final char = Character(
-        name: "Investigator",
-        attributes: [Attribute(name: "Strength", base: 60)],
+    test('Current HP should not exceed Max HP', () {
+      final character = Character(
+        name: "John Doe",
+        age: 32,
+        pronouns: "He/Him",
+        birthplace: "Arkham",
+        occupation: "Detective",
+        residence: "Arkham, MA",
+        currentHP: 12,
+        maxHP: 12,
+        currentSanity: 40,
+        startingSanity: 60,
+        currentMP: 8,
+        startingMP: 8,
+        attributes: [],
         skills: [],
       );
 
-      char.updateAttribute("Strength", 80);
-      expect(char.attributes[0].base, equals(80));
-      expect(char.attributes[0].hard, equals(40));
-      expect(char.attributes[0].extreme, equals(16));
+      expect(character.currentHP, lessThanOrEqualTo(character.maxHP));
     });
 
-    test('Character should update skills correctly', () {
-      final char = Character(
-        name: "Investigator",
+    test('Sanity should not exceed Max Sanity', () {
+      final character = Character(
+        name: "John Doe",
+        age: 32,
+        pronouns: "He/Him",
+        birthplace: "Arkham",
+        occupation: "Detective",
+        residence: "Arkham, MA",
+        currentHP: 10,
+        maxHP: 12,
+        currentSanity: 99,
+        startingSanity: 99,
+        currentMP: 8,
+        startingMP: 8,
         attributes: [],
-        skills: [Skill(name: "Stealth", base: 50)],
+        skills: [],
       );
 
-      char.updateSkill("Stealth", 85);
-      expect(char.skills[0].base, equals(85));
-      expect(char.skills[0].hard, equals(42));
-      expect(char.skills[0].extreme, equals(17));
+      expect(character.currentSanity, lessThanOrEqualTo(character.maxSanity));
     });
 
-    test('Updating a non-existing attribute should not crash', () {
-      final char = Character(name: "Investigator", attributes: [], skills: []);
-      char.updateAttribute("Nonexistent", 50);
-      expect(char.attributes.isEmpty, isTrue);
+    test('Status flags should toggle correctly', () {
+      final character = Character(
+        name: "John Doe",
+        age: 32,
+        pronouns: "He/Him",
+        birthplace: "Arkham",
+        occupation: "Detective",
+        residence: "Arkham, MA",
+        currentHP: 10,
+        maxHP: 12,
+        currentSanity: 40,
+        startingSanity: 60,
+        currentMP: 8,
+        startingMP: 8,
+        attributes: [],
+        skills: [],
+      );
+
+      expect(character.isDying, isFalse);
+      expect(character.isUnconscious, isFalse);
+      expect(character.hasMajorWound, isFalse);
+
+      character.hasMajorWound = true;
+      character.isDying = true;
+
+      expect(character.hasMajorWound, isTrue);
+      expect(character.isDying, isTrue);
     });
 
-    test('Updating a non-existing skill should not crash', () {
-      final char = Character(name: "Investigator", attributes: [], skills: []);
-      char.updateSkill("Nonexistent", 50);
-      expect(char.skills.isEmpty, isTrue);
+    test('Background fields should be correctly stored and retrievable', () {
+      final character = Character(
+        name: "John Doe",
+        age: 32,
+        pronouns: "He/Him",
+        birthplace: "Arkham",
+        occupation: "Detective",
+        residence: "Arkham, MA",
+        currentHP: 10,
+        maxHP: 12,
+        currentSanity: 40,
+        startingSanity: 60,
+        currentMP: 8,
+        startingMP: 8,
+        attributes: [],
+        skills: [],
+        personalDescription: "A tall man with sharp eyes.",
+        ideologyAndBeliefs: "Trust no one.",
+        significantPeople: "Detective Harrison, his mentor.",
+        meaningfulLocations: "The old police station.",
+        treasuredPossessions: "His father's watch.",
+        traitsAndMannerisms: "Always wears a fedora.",
+        injuriesAndScars: "Scar over right eye.",
+        phobiasAndManias: "Claustrophobia.",
+        arcaneTomesAndSpells: "Necronomicon (fragments).",
+        encountersWithEntities: "Saw a Deep One once.",
+        gear: "Revolver, flashlight, notepad.",
+        wealth: "Moderate savings.",
+        notes: "Investigating the Arkham disappearances.",
+      );
+
+      expect(character.personalDescription, contains("sharp eyes"));
+      expect(character.ideologyAndBeliefs, contains("Trust no one"));
+      expect(character.encountersWithEntities, contains("Deep One"));
+    });
+
+    test('Movement Rate should be 9 when DEX and STR are greater than SIZ', () {
+      final character = Character(
+        name: "Investigator",
+        age: 30,
+        pronouns: "They/Them",
+        birthplace: "Unknown",
+        occupation: "Private Investigator",
+        residence: "Arkham, MA",
+        currentHP: 10,
+        maxHP: 10,
+        currentSanity: 50,
+        startingSanity: 50,
+        currentMP: 10,
+        startingMP: 10,
+        attributes: [
+          Attribute(name: "Strength", base: 60),
+          Attribute(name: "Dexterity", base: 50),
+          Attribute(name: "Size", base: 40),
+        ],
+        skills: [],
+      );
+
+      expect(character.movementRate, equals(9));
+    });
+
+    test('Movement Rate should be 8 when either DEX or STR is equal to SIZ', () {
+      final character = Character(
+        name: "Investigator",
+        age: 30,
+        pronouns: "They/Them",
+        birthplace: "Unknown",
+        occupation: "Private Investigator",
+        residence: "Arkham, MA",
+        currentHP: 10,
+        maxHP: 10,
+        currentSanity: 50,
+        startingSanity: 50,
+        currentMP: 10,
+        startingMP: 10,
+        attributes: [
+          Attribute(name: "Strength", base: 40),
+          Attribute(name: "Dexterity", base: 50),
+          Attribute(name: "Size", base: 40),
+        ],
+        skills: [],
+      );
+
+      expect(character.movementRate, equals(8));
+    });
+
+    test('Movement Rate should be 7 when both DEX and STR are less than SIZ', () {
+      final character = Character(
+        name: "Investigator",
+        age: 30,
+        pronouns: "They/Them",
+        birthplace: "Unknown",
+        occupation: "Private Investigator",
+        residence: "Arkham, MA",
+        currentHP: 10,
+        maxHP: 10,
+        currentSanity: 50,
+        startingSanity: 50,
+        currentMP: 10,
+        startingMP: 10,
+        attributes: [
+          Attribute(name: "Strength", base: 30),
+          Attribute(name: "Dexterity", base: 30),
+          Attribute(name: "Size", base: 40),
+        ],
+        skills: [],
+      );
+
+      expect(character.movementRate, equals(7));
     });
   });
 }

@@ -1,22 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../viewmodels/character_viewmodel.dart';
-import '../widgets/attribute_widget.dart';
-import '../widgets/skill_widget.dart';
+import '../screens/info_tab.dart';
+import '../screens/attributes_tab.dart';
+import '../screens/skills_tab.dart';
+import '../screens/background_tab.dart';
 
-class CharacterSheetScreen extends StatelessWidget {
+class CharacterSheetScreen extends StatefulWidget {
   const CharacterSheetScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final characterVM = Provider.of<CharacterViewModel>(context);
+  CharacterSheetScreenState createState() => CharacterSheetScreenState();
+}
 
+class CharacterSheetScreenState extends State<CharacterSheetScreen> {
+  final List<Widget> _tabs = [
+    const InfoTab(),
+    const AttributesTab(),
+    const SkillsTab(),
+    BackgroundTab()
+  ];
+
+  @override
+  Widget build(BuildContext context) {
     return DefaultTabController(
       length: 4,
       child: Scaffold(
         appBar: AppBar(
-          title: Text("Character Sheet"),
-          bottom: TabBar(
+          title: const Text("Character Sheet"),
+          bottom: const TabBar(
             tabs: [
               Tab(text: "Info"),
               Tab(text: "Attributes"),
@@ -26,74 +36,20 @@ class CharacterSheetScreen extends StatelessWidget {
           ),
         ),
         body: TabBarView(
-          children: [
-            _buildInfoTab(characterVM),
-            _buildAttributesTab(characterVM),
-            _buildSkillsTab(characterVM),
-            _buildBackgroundTab(characterVM),
-          ],
+          children: _tabs,
         ),
         bottomNavigationBar: BottomNavigationBar(
-          items: [
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: "Sheet"),
-            BottomNavigationBarItem(icon: Icon(Icons.casino), label: "Dice"),
-            BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Settings"),
+          currentIndex: 0,
+          selectedItemColor: Colors.blue,
+          unselectedItemColor: Colors.grey,
+          backgroundColor: Theme.of(context).bottomAppBarTheme.color ?? Colors.black,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.assignment), label: "Character"),
+            BottomNavigationBarItem(icon: Icon(Icons.casino), label: "Dice Roller"),
+            BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Options"),
           ],
-          onTap: (index) {
-            if (index == 1) {
-              // Dice roller screen is disabled for now
-              // Navigator.pushNamed(context, '/dice');
-            }
-          },
         ),
       ),
-    );
-  }
-
-  Widget _buildInfoTab(CharacterViewModel characterVM) {
-    return Padding(
-      padding: EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            decoration: InputDecoration(labelText: "Character Name"),
-            controller: TextEditingController(text: characterVM.character.name),
-            onChanged: (value) => characterVM.updateName(value),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAttributesTab(CharacterViewModel characterVM) {
-    return ListView(
-      padding: EdgeInsets.all(16.0),
-      children: characterVM.character.attributes.map((attribute) =>
-        AttributeWidget(attribute: attribute, onTap: () {
-          // Dice roller screen is disabled for now
-          // Navigator.pushNamed(context, '/dice', arguments: attribute);
-        })
-      ).toList(),
-    );
-  }
-
-  Widget _buildSkillsTab(CharacterViewModel characterVM) {
-    return ListView(
-      padding: EdgeInsets.all(16.0),
-      children: characterVM.character.skills.map((skill) =>
-        SkillWidget(skill: skill, onTap: () {
-          // Dice roller screen is disabled for now
-          // Navigator.pushNamed(context, '/dice', arguments: skill);
-        })
-      ).toList(),
-    );
-  }
-
-  Widget _buildBackgroundTab(CharacterViewModel characterVM) {
-    return Padding(
-      padding: EdgeInsets.all(16.0),
-      child: Text("Character background and notes go here."),
     );
   }
 }
