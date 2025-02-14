@@ -40,9 +40,6 @@ class CharacterSheetScreenState extends State<CharacterSheetScreen> {
         ),
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: 0,
-          selectedItemColor: Colors.blue,
-          unselectedItemColor: Colors.grey,
-          backgroundColor: Theme.of(context).bottomAppBarTheme.color ?? Colors.black,
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.assignment), label: "Character"),
             BottomNavigationBarItem(icon: Icon(Icons.casino), label: "Dice Roller"),
