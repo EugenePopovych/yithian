@@ -14,7 +14,7 @@ class CharacterSheetScreen extends StatefulWidget {
 class CharacterSheetScreenState extends State<CharacterSheetScreen> {
   final List<Widget> _tabs = [
     const InfoTab(),
-    const AttributesTab(),
+    AttributesTab(),
     const SkillsTab(),
     BackgroundTab()
   ];

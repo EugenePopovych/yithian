@@ -16,6 +16,7 @@ class Character {
   int get maxSanity => 99 - (skills.firstWhere((s) => s.name == "Cthulhu Mythos", orElse: () => Skill(name: "Cthulhu Mythos", base: 0)).base);
   int currentMP;
   int startingMP;
+  int currentLuck;
   List<Attribute> attributes;
   List<Skill> skills;
 
@@ -54,6 +55,7 @@ class Character {
     required this.startingSanity,
     required this.currentMP,
     required this.startingMP,
+    required this.currentLuck,
     required this.attributes,
     required this.skills,
     this.personalDescription = "",
@@ -102,5 +104,9 @@ class Character {
         break;
       }
     }
+  }
+
+  void updateLuck(int luck) {
+    currentLuck = luck;
   }
 }

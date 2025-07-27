@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'viewmodels/character_viewmodel.dart';
 import 'screens/character_sheet_screen.dart';
-import 'theme_dark.dart';
 import 'theme_light.dart';
 
 void main() {

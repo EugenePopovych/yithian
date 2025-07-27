@@ -19,6 +19,7 @@ void main() {
         startingSanity: 60,
         currentMP: 8,
         startingMP: 8,
+        currentLuck: 50,
         attributes: [],
         skills: [Skill(name: "Cthulhu Mythos", base: 10)],
       );
@@ -43,6 +44,7 @@ void main() {
         startingSanity: 60,
         currentMP: 8,
         startingMP: 8,
+        currentLuck: 50,
         attributes: [],
         skills: [Skill(name: "Cthulhu Mythos", base: 20)],
       );
@@ -67,6 +69,7 @@ void main() {
         startingSanity: 60,
         currentMP: 8,
         startingMP: 8,
+        currentLuck: 50,
         attributes: [],
         skills: [],
       );
@@ -88,6 +91,7 @@ void main() {
         startingSanity: 99,
         currentMP: 8,
         startingMP: 8,
+        currentLuck: 50,
         attributes: [],
         skills: [],
       );
@@ -109,6 +113,7 @@ void main() {
         startingSanity: 60,
         currentMP: 8,
         startingMP: 8,
+        currentLuck: 50,
         attributes: [],
         skills: [],
       );
@@ -138,6 +143,7 @@ void main() {
         startingSanity: 60,
         currentMP: 8,
         startingMP: 8,
+        currentLuck: 50,
         attributes: [],
         skills: [],
         personalDescription: "A tall man with sharp eyes.",
@@ -174,6 +180,7 @@ void main() {
         startingSanity: 50,
         currentMP: 10,
         startingMP: 10,
+        currentLuck: 50,
         attributes: [
           Attribute(name: "Strength", base: 60),
           Attribute(name: "Dexterity", base: 50),
@@ -199,6 +206,7 @@ void main() {
         startingSanity: 50,
         currentMP: 10,
         startingMP: 10,
+        currentLuck: 50,
         attributes: [
           Attribute(name: "Strength", base: 40),
           Attribute(name: "Dexterity", base: 50),
@@ -224,6 +232,7 @@ void main() {
         startingSanity: 50,
         currentMP: 10,
         startingMP: 10,
+        currentLuck: 50,
         attributes: [
           Attribute(name: "Strength", base: 30),
           Attribute(name: "Dexterity", base: 30),

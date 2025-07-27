@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/character_viewmodel.dart';
+import 'package:coc_sheet/models/character.dart';
 
 class InfoTab extends StatefulWidget {
   const InfoTab({super.key});
@@ -24,20 +25,54 @@ class _InfoTabState extends State<InfoTab> {
   Widget build(BuildContext context) {
     final character = Provider.of<CharacterViewModel>(context).character;
     final viewModel = Provider.of<CharacterViewModel>(context, listen: false);
+    final isWideScreen = MediaQuery.of(context).size.width > 600;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildTextField("Name", character.name, (value) => viewModel.updateCharacterName(value)),
-          _buildTextField("Age", character.age.toString(), (value) => viewModel.updateCharacterInfo(age: int.tryParse(value) ?? character.age)),
-          _buildTextField("Pronouns", character.pronouns, (value) => viewModel.updateCharacterInfo(pronouns: value)),
-          _buildTextField("Occupation", character.occupation, (value) => viewModel.updateCharacterInfo(occupation: value)),
-          _buildTextField("Residence", character.residence, (value) => viewModel.updateCharacterInfo(residence: value)),
-          _buildTextField("Birthplace", character.birthplace, (value) => viewModel.updateCharacterInfo(birthplace: value)),
-        ],
-      ),
+      child: isWideScreen ? _buildWideLayout(character, viewModel) : _buildNarrowLayout(character, viewModel),
+    );
+  }
+
+  Widget _buildNarrowLayout(Character character, CharacterViewModel viewModel) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildTextField("Name", character.name, (value) => viewModel.updateCharacterName(value)),
+        _buildTextField("Age", character.age.toString(), (value) => viewModel.updateCharacterInfo(age: int.tryParse(value) ?? character.age)),
+        _buildTextField("Pronouns", character.pronouns, (value) => viewModel.updateCharacterInfo(pronouns: value)),
+        _buildTextField("Occupation", character.occupation, (value) => viewModel.updateCharacterInfo(occupation: value)),
+        _buildTextField("Residence", character.residence, (value) => viewModel.updateCharacterInfo(residence: value)),
+        _buildTextField("Birthplace", character.birthplace, (value) => viewModel.updateCharacterInfo(birthplace: value)),
+      ],
+    );
+  }
+
+  Widget _buildWideLayout(Character character, CharacterViewModel viewModel) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTextField("Name", character.name, (value) => viewModel.updateCharacterName(value)),
+              _buildTextField("Age", character.age.toString(), (value) => viewModel.updateCharacterInfo(age: int.tryParse(value) ?? character.age)),
+              _buildTextField("Pronouns", character.pronouns, (value) => viewModel.updateCharacterInfo(pronouns: value)),
+            ],
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTextField("Occupation", character.occupation, (value) => viewModel.updateCharacterInfo(occupation: value)),
+              _buildTextField("Residence", character.residence, (value) => viewModel.updateCharacterInfo(residence: value)),
+              _buildTextField("Birthplace", character.birthplace, (value) => viewModel.updateCharacterInfo(birthplace: value)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

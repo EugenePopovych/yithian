@@ -17,6 +17,7 @@ class CharacterViewModel extends ChangeNotifier {
     startingSanity: 50,
     currentMP: 10,
     startingMP: 10,
+    currentLuck: 50,
     attributes: [
       Attribute(name: "Strength", base: 50),
       Attribute(name: "Dexterity", base: 50),
@@ -26,7 +27,6 @@ class CharacterViewModel extends ChangeNotifier {
       Attribute(name: "Size", base: 50),
       Attribute(name: "Education", base: 50),
       Attribute(name: "Appearance", base: 50),
-      Attribute(name: "Luck", base: 50),
     ],
     skills: [
       Skill(name: "Accounting", base: 5),
@@ -170,6 +170,11 @@ class CharacterViewModel extends ChangeNotifier {
     if (gear != null) _character.gear = gear;
     if (wealth != null) _character.wealth = wealth;
     if (notes != null) _character.notes = notes;
+    notifyListeners();
+  }
+
+  void updateLuck(int luck) {
+    _character.updateLuck(luck);
     notifyListeners();
   }
 
