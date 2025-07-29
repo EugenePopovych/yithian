@@ -38,14 +38,6 @@ class CharacterSheetScreenState extends State<CharacterSheetScreen> {
         body: TabBarView(
           children: _tabs,
         ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: 0,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.assignment), label: "Character"),
-            BottomNavigationBarItem(icon: Icon(Icons.casino), label: "Dice Roller"),
-            BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Options"),
-          ],
-        ),
       ),
     );
   }

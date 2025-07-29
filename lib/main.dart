@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'viewmodels/character_viewmodel.dart';
-import 'screens/character_sheet_screen.dart';
+import 'screens/main_screen.dart';
 import 'theme_light.dart';
 
 void main() {
@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Call of Cthulhu Character Sheet',
         theme: cocThemeLight,
-        home: CharacterSheetScreen(), // 👈 Set this as the start screen
+        home: MainScreen(), // 👈 Use MainScreen instead!
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/character_viewmodel.dart';
 import '../models/skill.dart';
+import 'dice_roller_screen.dart';
 
 class SkillsTab extends StatefulWidget {
   const SkillsTab({super.key});
@@ -85,7 +86,16 @@ class _SkillsTabState extends State<SkillsTab> {
           flex: 3,
           child: GestureDetector(
             onTap: () {
-              // Future: Open dice roller screen
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => DiceRollerScreen(
+                    skillName: skill.name,
+                    base: skill.base,
+                    hard: skill.base ~/ 2,
+                    extreme: skill.base ~/ 5,
+                  ),
+                ),
+              );
             },
             child: Text(skill.name, overflow: TextOverflow.ellipsis),
           ),
