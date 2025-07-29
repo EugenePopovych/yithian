@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/character_viewmodel.dart';
 import '../models/skill.dart';
+import '../widgets/stat_row.dart';
 import 'dice_roller_screen.dart';
 
 class SkillsTab extends StatefulWidget {
@@ -28,7 +29,7 @@ class _SkillsTabState extends State<SkillsTab> {
     final viewModel = Provider.of<CharacterViewModel>(context, listen: false);
     final screenWidth = MediaQuery.of(context).size.width;
 
-    const double rowWidth = 330.0;
+    const double rowWidth = 346.0;
     final columnsCount = (screenWidth / (rowWidth + 16)).floor().clamp(2, 4);
     final sortedSkills = [...character.skills]..sort((a, b) => a.name.compareTo(b.name));
 
@@ -78,43 +79,26 @@ class _SkillsTabState extends State<SkillsTab> {
   Widget _buildSkillRow(Skill skill, CharacterViewModel viewModel) {
     _controllers.putIfAbsent(skill.name, () => TextEditingController(text: skill.base.toString()));
 
-    return Row(
-      children: [
-        const Icon(Icons.casino, size: 16),
-        const SizedBox(width: 4),
-        Expanded(
-          flex: 3,
-          child: GestureDetector(
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => DiceRollerScreen(
-                    skillName: skill.name,
-                    base: skill.base,
-                    hard: skill.base ~/ 2,
-                    extreme: skill.base ~/ 5,
-                  ),
-                ),
-              );
-            },
-            child: Text(skill.name, overflow: TextOverflow.ellipsis),
+    return StatRow(
+      name: skill.name,
+      base: skill.base,
+      hard: skill.hard,
+      extreme: skill.extreme,
+      controller: _controllers[skill.name]!, // manage controllers as before
+      onBaseChanged: (value) =>
+          viewModel.updateAttribute(skill.name, value),
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => DiceRollerScreen(
+              skillName: skill.name,
+              base: skill.base,
+              hard: skill.base ~/ 2,
+              extreme: skill.base ~/ 5,
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 50,
-          child: TextField(
-            controller: _controllers[skill.name],
-            decoration: const InputDecoration(border: InputBorder.none),
-            keyboardType: TextInputType.number,
-            textAlign: TextAlign.center,
-            onChanged: (val) => viewModel.updateSkill(skill.name, int.tryParse(val) ?? skill.base),
-          ),
-        ),
-        const SizedBox(width: 8),
-        SizedBox(width: 40, child: Text((skill.base ~/ 2).toString(), textAlign: TextAlign.center)),
-        SizedBox(width: 40, child: Text((skill.base ~/ 5).toString(), textAlign: TextAlign.center)),
-      ],
+        );
+      },
     );
   }
 }

@@ -5,7 +5,7 @@ import '../screens/settings_screen.dart'; // You may need to create this
 import '../widgets/screen_nav_bar.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({Key? key}) : super(key: key);
+  const MainScreen({super.key});
 
   @override
   State<MainScreen> createState() => _MainScreenState();

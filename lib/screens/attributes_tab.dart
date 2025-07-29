@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../viewmodels/character_viewmodel.dart';
 import '../models/attribute.dart';
 import '../models/character.dart';
+import '../widgets/stat_row.dart';
 import 'dice_roller_screen.dart';
 
 class AttributesTab extends StatefulWidget {
@@ -228,68 +229,26 @@ class _AttributesTabState extends State<AttributesTab> {
   Widget _buildAttributeRow(Attribute attribute, CharacterViewModel viewModel) {
     _controllers.putIfAbsent(attribute.name,
         () => TextEditingController(text: attribute.base.toString()));
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        children: [
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 130,
-            child: GestureDetector(
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => DiceRollerScreen(
-                      skillName: attribute.name,
-                      base: attribute.base,
-                      hard: attribute.hard,
-                      extreme: attribute.extreme,
-                    ),
-                  ),
-                );
-              },
-              child: Text(
-                attribute.name,
-                overflow: TextOverflow.ellipsis
-              ),
+    return StatRow(
+      name: attribute.name,
+      base: attribute.base,
+      hard: attribute.hard,
+      extreme: attribute.extreme,
+      controller: _controllers[attribute.name]!, // manage controllers as before
+      onBaseChanged: (value) =>
+          viewModel.updateAttribute(attribute.name, value),
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => DiceRollerScreen(
+              skillName: attribute.name,
+              base: attribute.base,
+              hard: attribute.hard,
+              extreme: attribute.extreme,
             ),
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            // Allow flexible spacing for the input fields
-            child: Row(
-              mainAxisAlignment:
-                  MainAxisAlignment.spaceEvenly, // Distribute fields evenly
-              children: [
-                SizedBox(
-                  width: 60, // Increased size for input fields
-                  child: TextField(
-                    decoration: const InputDecoration(border: InputBorder.none),
-                    controller: _controllers[attribute.name],
-                    keyboardType: TextInputType.number,
-                    textAlign: TextAlign.center,
-                    onChanged: (val) => viewModel.updateAttribute(
-                        attribute.name, int.tryParse(val) ?? attribute.base),
-                  ),
-                ),
-                SizedBox(
-                    width: 60,
-                    child: Text(attribute.hard.toString(),
-                        textAlign: TextAlign.center)),
-                SizedBox(
-                    width: 60,
-                    child: Text(attribute.extreme.toString(),
-                        textAlign: TextAlign.center)),
-              ],
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
