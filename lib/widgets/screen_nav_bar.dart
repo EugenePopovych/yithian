@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 
 class ScreenNavBar extends StatelessWidget {
   final int currentIndex;
+  final bool hasCharacter;
   final ValueChanged<int> onTap;
 
   const ScreenNavBar({
     super.key,
     required this.currentIndex,
+    required this.hasCharacter,
     required this.onTap,
   });
 
@@ -16,20 +18,23 @@ class ScreenNavBar extends StatelessWidget {
       currentIndex: currentIndex,
       onTap: onTap,
       type: BottomNavigationBarType.fixed,
-      items: const [
-        BottomNavigationBarItem(
+      items: [
+        const BottomNavigationBarItem(
           icon: Icon(Icons.list),
           label: 'Characters',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.assignment_ind),
+          icon: Icon(
+            Icons.assignment_ind,
+            color: hasCharacter ? null : Colors.grey,
+          ),
           label: 'Sheet',
         ),
-        BottomNavigationBarItem(
+        const BottomNavigationBarItem(
           icon: Icon(Icons.casino),
           label: 'Dice',
         ),
-        BottomNavigationBarItem(
+        const BottomNavigationBarItem(
           icon: Icon(Icons.settings),
           label: 'Settings',
         ),

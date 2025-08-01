@@ -19,17 +19,48 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final CharacterViewModel _viewModel = CharacterViewModel();
+  bool _initialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initAsync();
+  }
+
+  Future<void> _initAsync() async {
+    await _viewModel.init();
+    setState(() {
+      _initialized = true;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => CharacterViewModel(),
+    if (!_initialized) {
+      return MaterialApp(
+        title: 'Call of Cthulhu Character Sheet',
+        theme: cocThemeLight,
+        home: const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+
+    return ChangeNotifierProvider<CharacterViewModel>.value(
+      value: _viewModel,
       child: MaterialApp(
         title: 'Call of Cthulhu Character Sheet',
         theme: cocThemeLight,
-        home: MainScreen(), 
+        home: const MainScreen(),
       ),
     );
   }
