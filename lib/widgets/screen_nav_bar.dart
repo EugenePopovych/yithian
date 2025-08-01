@@ -18,8 +18,12 @@ class ScreenNavBar extends StatelessWidget {
       type: BottomNavigationBarType.fixed,
       items: const [
         BottomNavigationBarItem(
+          icon: Icon(Icons.list),
+          label: 'Characters',
+        ),
+        BottomNavigationBarItem(
           icon: Icon(Icons.assignment_ind),
-          label: 'Character',
+          label: 'Sheet',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.casino),

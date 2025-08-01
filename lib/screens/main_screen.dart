@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import '../screens/character_list_screen.dart';
 import '../screens/character_sheet_screen.dart';
 import '../screens/dice_roller_screen.dart';
-import '../screens/settings_screen.dart'; // You may need to create this
+import '../screens/settings_screen.dart';
 import '../widgets/screen_nav_bar.dart';
 
 class MainScreen extends StatefulWidget {
@@ -12,14 +13,15 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 0;
+  int _selectedIndex = 1; // Sheet by default
 
   @override
   Widget build(BuildContext context) {
     final screens = [
-      const CharacterSheetScreen(),
-      const DiceRollerScreen(), // Opens in generic mode (no skill)
-      const SettingsScreen(),   // Create a stub if you don't have it
+      const CharacterListScreen(),    // Index 0: Character list
+      const CharacterSheetScreen(),   // Index 1: Sheet
+      const DiceRollerScreen(),       // Index 2: Dice
+      const SettingsScreen(),         // Index 3: Settings
     ];
     return Scaffold(
       body: screens[_selectedIndex],

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../viewmodels/character_viewmodel.dart';
 import '../screens/info_tab.dart';
 import '../screens/attributes_tab.dart';
 import '../screens/skills_tab.dart';
@@ -21,11 +23,14 @@ class CharacterSheetScreenState extends State<CharacterSheetScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Read character name from the viewmodel
+    final characterName = context.watch<CharacterViewModel>().character.name;
+
     return DefaultTabController(
       length: 4,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text("Character Sheet"),
+          title: Text(characterName.isNotEmpty ? characterName : "Character Sheet"),
           bottom: const TabBar(
             tabs: [
               Tab(text: "Info"),
