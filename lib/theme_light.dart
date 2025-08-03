@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+const Color selectedNavColor = Color(0xFF49774C); // Greenish
+const Color availableNavColor = Colors.black;
+final Color disabledNavColor = Colors.grey.shade400;
+
 final ThemeData cocThemeLight = ThemeData(
   brightness: Brightness.light,
   primaryColor: Color(0xFFB8C6A7), // Soft green
