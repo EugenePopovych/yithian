@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import '../models/hive_character.dart';
 import '../models/character.dart';
+import '../models/attribute.dart';
+import '../models/skill.dart';
 import '../viewmodels/character_viewmodel.dart';
 
 class CharacterListScreen extends StatefulWidget {
@@ -35,16 +37,29 @@ class _CharacterListScreenState extends State<CharacterListScreen> {
   }
 
   Future<void> _createNewCharacter() async {
-    String baseName = 'Investigator';
+    // Choose defaults for new character
+    String baseName = 'Randolph Carter';
+    String baseProfession = 'Detective';
+
+    // Count how many sheets start with the same base name
     int sameNames = characters.where((c) => c.name.startsWith(baseName)).length;
-    String name = sameNames > 0 ? '$baseName (version ${sameNames + 1})' : baseName;
+
+    String name = baseName;
+    String profession = baseProfession;
+
+    // Build initial sheet name
+    String sheetName = "$name - $profession";
+    if (sameNames > 0) {
+      sheetName = "$sheetName (version ${sameNames + 1})";
+    }
 
     final newCharacter = Character(
+      sheetName: sheetName,
       name: name,
       age: 25,
       pronouns: '',
       birthplace: '',
-      occupation: '',
+      occupation: profession,
       residence: '',
       currentHP: 10,
       maxHP: 10,
@@ -53,16 +68,72 @@ class _CharacterListScreenState extends State<CharacterListScreen> {
       currentMP: 10,
       startingMP: 10,
       currentLuck: 50,
-      attributes: [],
-      skills: [],
+      attributes: [
+        Attribute(name: "Strength", base: 50),
+        Attribute(name: "Dexterity", base: 50),
+        Attribute(name: "Constitution", base: 50),
+        Attribute(name: "Intelligence", base: 50),
+        Attribute(name: "Power", base: 50),
+        Attribute(name: "Size", base: 50),
+        Attribute(name: "Education", base: 50),
+        Attribute(name: "Appearance", base: 50),
+      ],      
+      skills: [
+        Skill(name: "Accounting", base: 5),
+        Skill(name: "Anthropology", base: 1),
+        Skill(name: "Appraise", base: 5),
+        Skill(name: "Archaeology", base: 1),
+        Skill(name: "Art/Craft", base: 5), // This will later be split into subskills
+        Skill(name: "Charm", base: 15),
+        Skill(name: "Climb", base: 20),
+        Skill(name: "Credit Rating", base: 0),
+        Skill(name: "Cthulhu Mythos", base: 0),
+        Skill(name: "Disguise", base: 5),
+        Skill(name: "Dodge", base: 50),
+        Skill(name: "Drive Auto", base: 20),
+        Skill(name: "Electrical Repair", base: 10),
+        Skill(name: "Fast Talk", base: 5),
+        Skill(name: "Fighting (Brawl)", base: 25),
+        Skill(name: "Firearms (Handgun)", base: 20),
+        Skill(name: "Firearms (Rifle/Shotgun)", base: 25),
+        Skill(name: "First Aid", base: 30),
+        Skill(name: "History", base: 5),
+        Skill(name: "Intimidate", base: 15),
+        Skill(name: "Jump", base: 20),
+        Skill(name: "Language (Own)", base: 50),
+        Skill(name: "Law", base: 5),
+        Skill(name: "Library Use", base: 20),
+        Skill(name: "Listen", base: 20),
+        Skill(name: "Locksmith", base: 1),
+        Skill(name: "Mechanical Repair", base: 10),
+        Skill(name: "Medicine", base: 1),
+        Skill(name: "Natural World", base: 10),
+        Skill(name: "Navigate", base: 10),
+        Skill(name: "Occult", base: 5),
+        Skill(name: "Operate Heavy Machinery", base: 1),
+        Skill(name: "Persuade", base: 10),
+        Skill(name: "Pilot", base: 1),
+        Skill(name: "Psychology", base: 10),
+        Skill(name: "Psychoanalysis", base: 1),
+        Skill(name: "Ride", base: 5),
+        Skill(name: "Science", base: 1), // Later can add subskills
+        Skill(name: "Sleight of Hand", base: 10),
+        Skill(name: "Spot Hidden", base: 25),
+        Skill(name: "Stealth", base: 20),
+        Skill(name: "Survival", base: 10),
+        Skill(name: "Swim", base: 20),
+        Skill(name: "Throw", base: 20),
+        Skill(name: "Track", base: 10),
+      ]
     );
-    final id = const Uuid().v4();
 
-    // Use viewmodel to create and set character
+    final id = const Uuid().v4();
     final viewModel = Provider.of<CharacterViewModel>(context, listen: false);
     await viewModel.createCharacter(newCharacter, id: id);
 
-    _refreshList(); // Keep the list in sync
+    _refreshList();
+
+    if (!mounted) return;
 
     // Call the callback to switch to the sheet tab!
     widget.onCharacterSelected?.call();

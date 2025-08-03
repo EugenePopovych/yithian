@@ -74,6 +74,13 @@ class CharacterViewModel extends ChangeNotifier {
 
   // ------- All update methods auto-save -------
 
+  void updateCharacterSheetName(String newSheetName) {
+    if (_character == null) return;
+    _character!.sheetName = newSheetName;
+    notifyListeners();
+    saveCharacter();
+  }
+
   void updateCharacterName(String newName) {
     if (_character == null) return;
     _character!.name = newName;

@@ -21,6 +21,21 @@ class CharacterSheetScreenState extends State<CharacterSheetScreen> {
     BackgroundTab()
   ];
 
+  late TextEditingController _sheetNameController;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final character = context.read<CharacterViewModel>().character;
+    _sheetNameController = TextEditingController(text: character?.sheetName ?? '');
+  }
+
+  @override
+  void dispose() {
+    _sheetNameController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<CharacterViewModel>();
@@ -32,13 +47,35 @@ class CharacterSheetScreenState extends State<CharacterSheetScreen> {
       );
     }
 
-    final characterName = character.name;
+    // Keep controller in sync if character changes
+    if (_sheetNameController.text != character.sheetName) {
+      _sheetNameController.text = character.sheetName;
+      _sheetNameController.selection = TextSelection.fromPosition(
+        TextPosition(offset: _sheetNameController.text.length),
+      );
+    }
 
     return DefaultTabController(
       length: 4,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(characterName.isNotEmpty ? characterName : "Character Sheet"),
+          // Editable sheet name in AppBar
+          title: SizedBox(
+            height: 36,
+            child: TextField(
+              controller: _sheetNameController,
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                hintText: "Sheet Name",
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(vertical: 8),
+              ),
+              style: Theme.of(context).appBarTheme.titleTextStyle ??
+                  Theme.of(context).textTheme.titleLarge,
+              textAlign: TextAlign.center,
+              onChanged: (val) => viewModel.updateCharacterSheetName(val),
+            ),
+          ),
           bottom: const TabBar(
             tabs: [
               Tab(text: "Info"),

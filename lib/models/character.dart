@@ -2,6 +2,7 @@ import 'attribute.dart';
 import 'skill.dart';
 
 class Character {
+  String sheetName;
   String name;
   int age;
   String pronouns;
@@ -43,6 +44,7 @@ class Character {
   bool isDying;
 
   Character({
+    required this.sheetName,
     required this.name,
     required this.age,
     required this.pronouns,

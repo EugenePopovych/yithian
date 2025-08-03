@@ -17,111 +17,114 @@ class HiveCharacterAdapter extends TypeAdapter<HiveCharacter> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return HiveCharacter(
-      name: fields[0] as String,
-      age: fields[1] as int,
-      pronouns: fields[2] as String,
-      birthplace: fields[3] as String,
-      occupation: fields[4] as String,
-      residence: fields[5] as String,
-      currentHP: fields[6] as int,
-      maxHP: fields[7] as int,
-      currentSanity: fields[8] as int,
-      startingSanity: fields[9] as int,
-      currentMP: fields[10] as int,
-      startingMP: fields[11] as int,
-      currentLuck: fields[12] as int,
-      attributes: (fields[13] as List).cast<HiveAttribute>(),
-      skills: (fields[14] as List).cast<HiveSkill>(),
-      personalDescription: fields[15] as String,
-      ideologyAndBeliefs: fields[16] as String,
-      significantPeople: fields[17] as String,
-      meaningfulLocations: fields[18] as String,
-      treasuredPossessions: fields[19] as String,
-      traitsAndMannerisms: fields[20] as String,
-      injuriesAndScars: fields[21] as String,
-      phobiasAndManias: fields[22] as String,
-      arcaneTomesAndSpells: fields[23] as String,
-      encountersWithEntities: fields[24] as String,
-      gear: fields[25] as String,
-      wealth: fields[26] as String,
-      notes: fields[27] as String,
-      hasMajorWound: fields[28] as bool,
-      isIndefinitelyInsane: fields[29] as bool,
-      isTemporarilyInsane: fields[30] as bool,
-      isUnconscious: fields[31] as bool,
-      isDying: fields[32] as bool,
+      sheetName: fields[0] as String,
+      name: fields[1] as String,
+      age: fields[2] as int,
+      pronouns: fields[3] as String,
+      birthplace: fields[4] as String,
+      occupation: fields[5] as String,
+      residence: fields[6] as String,
+      currentHP: fields[7] as int,
+      maxHP: fields[8] as int,
+      currentSanity: fields[9] as int,
+      startingSanity: fields[10] as int,
+      currentMP: fields[11] as int,
+      startingMP: fields[12] as int,
+      currentLuck: fields[13] as int,
+      attributes: (fields[14] as List).cast<HiveAttribute>(),
+      skills: (fields[15] as List).cast<HiveSkill>(),
+      personalDescription: fields[16] as String,
+      ideologyAndBeliefs: fields[17] as String,
+      significantPeople: fields[18] as String,
+      meaningfulLocations: fields[19] as String,
+      treasuredPossessions: fields[20] as String,
+      traitsAndMannerisms: fields[21] as String,
+      injuriesAndScars: fields[22] as String,
+      phobiasAndManias: fields[23] as String,
+      arcaneTomesAndSpells: fields[24] as String,
+      encountersWithEntities: fields[25] as String,
+      gear: fields[26] as String,
+      wealth: fields[27] as String,
+      notes: fields[28] as String,
+      hasMajorWound: fields[29] as bool,
+      isIndefinitelyInsane: fields[30] as bool,
+      isTemporarilyInsane: fields[31] as bool,
+      isUnconscious: fields[32] as bool,
+      isDying: fields[33] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, HiveCharacter obj) {
     writer
-      ..writeByte(33)
+      ..writeByte(34)
       ..writeByte(0)
-      ..write(obj.name)
+      ..write(obj.sheetName)
       ..writeByte(1)
-      ..write(obj.age)
+      ..write(obj.name)
       ..writeByte(2)
-      ..write(obj.pronouns)
+      ..write(obj.age)
       ..writeByte(3)
-      ..write(obj.birthplace)
+      ..write(obj.pronouns)
       ..writeByte(4)
-      ..write(obj.occupation)
+      ..write(obj.birthplace)
       ..writeByte(5)
-      ..write(obj.residence)
+      ..write(obj.occupation)
       ..writeByte(6)
-      ..write(obj.currentHP)
+      ..write(obj.residence)
       ..writeByte(7)
-      ..write(obj.maxHP)
+      ..write(obj.currentHP)
       ..writeByte(8)
-      ..write(obj.currentSanity)
+      ..write(obj.maxHP)
       ..writeByte(9)
-      ..write(obj.startingSanity)
+      ..write(obj.currentSanity)
       ..writeByte(10)
-      ..write(obj.currentMP)
+      ..write(obj.startingSanity)
       ..writeByte(11)
-      ..write(obj.startingMP)
+      ..write(obj.currentMP)
       ..writeByte(12)
-      ..write(obj.currentLuck)
+      ..write(obj.startingMP)
       ..writeByte(13)
-      ..write(obj.attributes)
+      ..write(obj.currentLuck)
       ..writeByte(14)
-      ..write(obj.skills)
+      ..write(obj.attributes)
       ..writeByte(15)
-      ..write(obj.personalDescription)
+      ..write(obj.skills)
       ..writeByte(16)
-      ..write(obj.ideologyAndBeliefs)
+      ..write(obj.personalDescription)
       ..writeByte(17)
-      ..write(obj.significantPeople)
+      ..write(obj.ideologyAndBeliefs)
       ..writeByte(18)
-      ..write(obj.meaningfulLocations)
+      ..write(obj.significantPeople)
       ..writeByte(19)
-      ..write(obj.treasuredPossessions)
+      ..write(obj.meaningfulLocations)
       ..writeByte(20)
-      ..write(obj.traitsAndMannerisms)
+      ..write(obj.treasuredPossessions)
       ..writeByte(21)
-      ..write(obj.injuriesAndScars)
+      ..write(obj.traitsAndMannerisms)
       ..writeByte(22)
-      ..write(obj.phobiasAndManias)
+      ..write(obj.injuriesAndScars)
       ..writeByte(23)
-      ..write(obj.arcaneTomesAndSpells)
+      ..write(obj.phobiasAndManias)
       ..writeByte(24)
-      ..write(obj.encountersWithEntities)
+      ..write(obj.arcaneTomesAndSpells)
       ..writeByte(25)
-      ..write(obj.gear)
+      ..write(obj.encountersWithEntities)
       ..writeByte(26)
-      ..write(obj.wealth)
+      ..write(obj.gear)
       ..writeByte(27)
-      ..write(obj.notes)
+      ..write(obj.wealth)
       ..writeByte(28)
-      ..write(obj.hasMajorWound)
+      ..write(obj.notes)
       ..writeByte(29)
-      ..write(obj.isIndefinitelyInsane)
+      ..write(obj.hasMajorWound)
       ..writeByte(30)
-      ..write(obj.isTemporarilyInsane)
+      ..write(obj.isIndefinitelyInsane)
       ..writeByte(31)
-      ..write(obj.isUnconscious)
+      ..write(obj.isTemporarilyInsane)
       ..writeByte(32)
+      ..write(obj.isUnconscious)
+      ..writeByte(33)
       ..write(obj.isDying);
   }
 

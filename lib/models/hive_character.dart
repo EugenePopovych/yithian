@@ -8,107 +8,111 @@ part 'hive_character.g.dart';
 @HiveType(typeId: 0)
 class HiveCharacter extends HiveObject {
   @HiveField(0)
-  String name;
+  String sheetName;
 
   @HiveField(1)
-  int age;
+  String name;
 
   @HiveField(2)
-  String pronouns;
+  int age;
 
   @HiveField(3)
-  String birthplace;
+  String pronouns;
 
   @HiveField(4)
-  String occupation;
+  String birthplace;
 
   @HiveField(5)
-  String residence;
+  String occupation;
 
   @HiveField(6)
-  int currentHP;
+  String residence;
 
   @HiveField(7)
-  int maxHP;
+  int currentHP;
 
   @HiveField(8)
-  int currentSanity;
+  int maxHP;
 
   @HiveField(9)
-  int startingSanity;
+  int currentSanity;
 
   @HiveField(10)
-  int currentMP;
+  int startingSanity;
 
   @HiveField(11)
-  int startingMP;
+  int currentMP;
 
   @HiveField(12)
-  int currentLuck;
+  int startingMP;
 
   @HiveField(13)
-  List<HiveAttribute> attributes;
+  int currentLuck;
 
   @HiveField(14)
+  List<HiveAttribute> attributes;
+
+  @HiveField(15)
   List<HiveSkill> skills;
 
   // Background info
-  @HiveField(15)
+  @HiveField(16)
   String personalDescription;
 
-  @HiveField(16)
+  @HiveField(17)
   String ideologyAndBeliefs;
 
-  @HiveField(17)
+  @HiveField(18)
   String significantPeople;
 
-  @HiveField(18)
+  @HiveField(19)
   String meaningfulLocations;
 
-  @HiveField(19)
+  @HiveField(20)
   String treasuredPossessions;
 
-  @HiveField(20)
+  @HiveField(21)
   String traitsAndMannerisms;
 
-  @HiveField(21)
+  @HiveField(22)
   String injuriesAndScars;
 
-  @HiveField(22)
+  @HiveField(23)
   String phobiasAndManias;
 
-  @HiveField(23)
+  @HiveField(24)
   String arcaneTomesAndSpells;
 
-  @HiveField(24)
+  @HiveField(25)
   String encountersWithEntities;
 
-  @HiveField(25)
+  @HiveField(26)
   String gear;
 
-  @HiveField(26)
+  @HiveField(27)
   String wealth;
 
-  @HiveField(27)
+  @HiveField(28)
   String notes;
 
   // Status
-  @HiveField(28)
+  @HiveField(29)
   bool hasMajorWound;
 
-  @HiveField(29)
+  @HiveField(30)
   bool isIndefinitelyInsane;
 
-  @HiveField(30)
+  @HiveField(31)
   bool isTemporarilyInsane;
 
-  @HiveField(31)
+  @HiveField(32)
   bool isUnconscious;
 
-  @HiveField(32)
+  @HiveField(33)
   bool isDying;
 
   HiveCharacter({
+    required this.sheetName,
     required this.name,
     required this.age,
     required this.pronouns,
@@ -146,6 +150,7 @@ class HiveCharacter extends HiveObject {
 
   // Conversion from Character (UI model) to HiveCharacter (storage model)
   factory HiveCharacter.fromCharacter(Character c) => HiveCharacter(
+    sheetName: c.sheetName,
     name: c.name,
     age: c.age,
     pronouns: c.pronouns,
@@ -183,6 +188,7 @@ class HiveCharacter extends HiveObject {
 
   // Conversion from HiveCharacter to Character
   Character toCharacter() => Character(
+    sheetName: sheetName,
     name: name,
     age: age,
     pronouns: pronouns,
