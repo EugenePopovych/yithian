@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/character_viewmodel.dart';
-import 'package:coc_sheet/models/character.dart';
 
 class InfoTab extends StatefulWidget {
   const InfoTab({super.key});
@@ -23,17 +22,26 @@ class _InfoTabState extends State<InfoTab> {
 
   @override
   Widget build(BuildContext context) {
-    final character = Provider.of<CharacterViewModel>(context).character;
     final viewModel = Provider.of<CharacterViewModel>(context, listen: false);
+    final character = viewModel.character;
     final isWideScreen = MediaQuery.of(context).size.width > 600;
+
+    if (character == null) {
+      return const Center(
+        child: Text('No character loaded.\nPlease create or select a character first.'),
+      );
+    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
-      child: isWideScreen ? _buildWideLayout(character, viewModel) : _buildNarrowLayout(character, viewModel),
+      child: isWideScreen
+          ? _buildWideLayout(viewModel)
+          : _buildNarrowLayout(viewModel),
     );
   }
 
-  Widget _buildNarrowLayout(Character character, CharacterViewModel viewModel) {
+  Widget _buildNarrowLayout(CharacterViewModel viewModel) {
+    final character = viewModel.character!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -47,7 +55,8 @@ class _InfoTabState extends State<InfoTab> {
     );
   }
 
-  Widget _buildWideLayout(Character character, CharacterViewModel viewModel) {
+  Widget _buildWideLayout(CharacterViewModel viewModel) {
+    final character = viewModel.character!;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

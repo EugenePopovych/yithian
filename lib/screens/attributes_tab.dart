@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../viewmodels/character_viewmodel.dart';
 import '../models/attribute.dart';
-import '../models/character.dart';
+import '../viewmodels/character_viewmodel.dart';
 import '../widgets/stat_row.dart';
 import 'dice_roller_screen.dart';
 
@@ -26,25 +25,27 @@ class _AttributesTabState extends State<AttributesTab> {
 
   @override
   Widget build(BuildContext context) {
-    final character = Provider.of<CharacterViewModel>(context).character;
     final viewModel = Provider.of<CharacterViewModel>(context, listen: false);
+    final character = viewModel.character;
     final screenWidth = MediaQuery.of(context).size.width;
-    final columns =
-        (screenWidth / 300).floor().clamp(2, 4); // Adaptive column count
+    final columns = (screenWidth / 300).floor().clamp(2, 4);
+
+    if (character == null) {
+      return const Center(
+        child: Text('No character loaded.\nPlease create or select a character first.'),
+      );
+    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSection("Health, Sanity, Magic Points",
-              _buildHealthSanityLuck(character, viewModel)),
+          _buildSection("Health, Sanity, Magic Points", _buildHealthSanityLuck(viewModel)),
           const SizedBox(height: 16),
-          _buildSection("Attributes",
-              _buildAttributesGrid(character, viewModel, columns)),
+          _buildSection("Attributes", _buildAttributesGrid(viewModel, columns)),
           const SizedBox(height: 16),
-          _buildSection("Status Effects",
-              _buildStatusEffects(character, viewModel, columns)),
+          _buildSection("Status Effects", _buildStatusEffects(viewModel, columns)),
         ],
       ),
     );
@@ -68,8 +69,8 @@ class _AttributesTabState extends State<AttributesTab> {
     );
   }
 
-  Widget _buildHealthSanityLuck(
-      Character character, CharacterViewModel viewModel) {
+  Widget _buildHealthSanityLuck(CharacterViewModel viewModel) {
+    final character = viewModel.character!;
     return Wrap(
       spacing: 16.0,
       runSpacing: 8.0,
@@ -78,45 +79,37 @@ class _AttributesTabState extends State<AttributesTab> {
             "Health",
             character.currentHP,
             character.maxHP,
-            (val) => viewModel.updateHealth(
-                int.tryParse(val) ?? character.currentHP, character.maxHP)),
+            (val) => viewModel.updateHealth(int.tryParse(val) ?? character.currentHP, character.maxHP)),
         _buildStatBox(
             "Sanity",
             character.currentSanity,
             character.startingSanity,
-            (val) => viewModel.updateSanity(
-                int.tryParse(val) ?? character.currentSanity,
-                character.startingSanity)),
+            (val) => viewModel.updateSanity(int.tryParse(val) ?? character.currentSanity, character.startingSanity)),
         _buildStatBox(
             "Magic",
             character.currentMP,
             character.startingMP,
-            (val) => viewModel.updateMagicPoints(
-                int.tryParse(val) ?? character.currentMP,
-                character.startingMP)),
+            (val) => viewModel.updateMagicPoints(int.tryParse(val) ?? character.currentMP, character.startingMP)),
         _buildStatBox(
             "Luck",
             character.currentLuck,
             99,
-            (val) => viewModel
-                .updateLuck(int.tryParse(val) ?? character.currentLuck)),
+            (val) => viewModel.updateLuck(int.tryParse(val) ?? character.currentLuck)),
       ],
     );
   }
 
-  Widget _buildStatBox(
-      String label, int current, int max, Function(String) onChanged) {
+  Widget _buildStatBox(String label, int current, int max, Function(String) onChanged) {
     final controller = TextEditingController(text: current.toString());
 
     return SizedBox(
-      width: 180, // Fixed width for each stat box
+      width: 180,
       child: Row(
         children: [
           SizedBox(
               width: 70,
-              child:
-                  Text(label, textAlign: TextAlign.right)), // Label on the left
-          const SizedBox(width: 8), // Fixed spacing between label and field
+              child: Text(label, textAlign: TextAlign.right)),
+          const SizedBox(width: 8),
           Expanded(
             child: TextField(
               controller: controller,
@@ -125,8 +118,7 @@ class _AttributesTabState extends State<AttributesTab> {
               decoration: const InputDecoration(border: OutlineInputBorder()),
               onChanged: (val) => onChanged(val),
               onTap: () => controller.selection = TextSelection(
-                  baseOffset: 0,
-                  extentOffset: controller.text.length), // Keeps focus on edit
+                  baseOffset: 0, extentOffset: controller.text.length),
             ),
           ),
           const SizedBox(width: 8),
@@ -136,46 +128,29 @@ class _AttributesTabState extends State<AttributesTab> {
     );
   }
 
-  Widget _buildAttributesGrid(
-      Character character, CharacterViewModel viewModel, int columns) {
-    final attributes = character.attributes;
-    const double rowWidth = 330.0; // Fixed width for each row
+  Widget _buildAttributesGrid(CharacterViewModel viewModel, int columns) {
+    final character = viewModel.character!;
+    const double rowWidth = 330.0;
 
     return Wrap(
-      spacing: 16.0, // Horizontal spacing between columns
-      runSpacing: 8.0, // Vertical spacing between rows
-      children: attributes.map((attribute) {
+      spacing: 16.0,
+      runSpacing: 8.0,
+      children: character.attributes.map((attribute) {
         return SizedBox(
-          width: rowWidth, // Ensure each row has a fixed width
+          width: rowWidth,
           child: _buildAttributeRow(attribute, viewModel),
         );
       }).toList(),
     );
   }
 
-  Widget _buildStatusEffects(
-      Character character, CharacterViewModel viewModel, int columns) {
+  Widget _buildStatusEffects(CharacterViewModel viewModel, int columns) {
+    final character = viewModel.character!;
     final statusEffects = [
-      {
-        "label": "Major Wound",
-        "value": character.hasMajorWound,
-        "key": "hasMajorWound"
-      },
-      {
-        "label": "Indefinite Madness",
-        "value": character.isIndefinitelyInsane,
-        "key": "isIndefinitelyInsane"
-      },
-      {
-        "label": "Temporary Madness",
-        "value": character.isTemporarilyInsane,
-        "key": "isTemporarilyInsane"
-      },
-      {
-        "label": "Unconscious",
-        "value": character.isUnconscious,
-        "key": "isUnconscious"
-      },
+      {"label": "Major Wound", "value": character.hasMajorWound, "key": "hasMajorWound"},
+      {"label": "Indefinite Madness", "value": character.isIndefinitelyInsane, "key": "isIndefinitelyInsane"},
+      {"label": "Temporary Madness", "value": character.isTemporarilyInsane, "key": "isTemporarilyInsane"},
+      {"label": "Unconscious", "value": character.isUnconscious, "key": "isUnconscious"},
       {"label": "Dying", "value": character.isDying, "key": "isDying"},
     ];
 
@@ -188,17 +163,15 @@ class _AttributesTabState extends State<AttributesTab> {
     );
   }
 
-  Widget _buildStatusCheckbox(
-      Map<String, dynamic> status, CharacterViewModel viewModel) {
+  Widget _buildStatusCheckbox(Map<String, dynamic> status, CharacterViewModel viewModel) {
     return SizedBox(
-      width: 200, // Fixed width for each checkbox container
+      width: 200,
       child: Row(
         children: [
           Expanded(
-            child: Text(status["label"],
-                textAlign: TextAlign.right), // Right-aligned label
+            child: Text(status["label"], textAlign: TextAlign.right),
           ),
-          const SizedBox(width: 8), // Fixed spacing between checkbox and label
+          const SizedBox(width: 8),
           Checkbox(
             value: status["value"],
             onChanged: (val) {
@@ -227,16 +200,14 @@ class _AttributesTabState extends State<AttributesTab> {
   }
 
   Widget _buildAttributeRow(Attribute attribute, CharacterViewModel viewModel) {
-    _controllers.putIfAbsent(attribute.name,
-        () => TextEditingController(text: attribute.base.toString()));
+    _controllers.putIfAbsent(attribute.name, () => TextEditingController(text: attribute.base.toString()));
     return StatRow(
       name: attribute.name,
       base: attribute.base,
       hard: attribute.hard,
       extreme: attribute.extreme,
-      controller: _controllers[attribute.name]!, // manage controllers as before
-      onBaseChanged: (value) =>
-          viewModel.updateAttribute(attribute.name, value),
+      controller: _controllers[attribute.name]!,
+      onBaseChanged: (value) => viewModel.updateAttribute(attribute.name, value),
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(

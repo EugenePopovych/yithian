@@ -23,8 +23,16 @@ class CharacterSheetScreenState extends State<CharacterSheetScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Read character name from the viewmodel
-    final characterName = context.watch<CharacterViewModel>().character.name;
+    final viewModel = context.watch<CharacterViewModel>();
+    final character = viewModel.character;
+
+    if (character == null) {
+      return const Center(
+        child: Text('No character loaded.\nPlease create or select a character first.'),
+      );
+    }
+
+    final characterName = character.name;
 
     return DefaultTabController(
       length: 4,

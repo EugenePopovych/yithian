@@ -77,9 +77,17 @@ class _CharacterListScreenState extends State<CharacterListScreen> {
 
   void _deleteCharacter(int index) async {
     final key = hiveKeys[index];
+    final viewModel = Provider.of<CharacterViewModel>(context, listen: false);
+
+    // If the deleted character is the current one, clear from viewmodel
+    if (viewModel.hasCharacter && viewModel.characterId == key) {
+      viewModel.clearCharacter();
+    }
+
     await characterBox.delete(key);
     _refreshList();
   }
+
 
   Future<void> _openCharacter(int index) async {
     final key = hiveKeys[index];

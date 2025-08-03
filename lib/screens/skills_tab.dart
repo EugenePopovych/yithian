@@ -25,9 +25,15 @@ class _SkillsTabState extends State<SkillsTab> {
 
   @override
   Widget build(BuildContext context) {
-    final character = Provider.of<CharacterViewModel>(context).character;
     final viewModel = Provider.of<CharacterViewModel>(context, listen: false);
+    final character = viewModel.character;
     final screenWidth = MediaQuery.of(context).size.width;
+
+    if (character == null) {
+      return const Center(
+        child: Text('No character loaded.\nPlease create or select a character first.'),
+      );
+    }
 
     const double rowWidth = 346.0;
     final columnsCount = (screenWidth / (rowWidth + 16)).floor().clamp(2, 4);
@@ -84,9 +90,8 @@ class _SkillsTabState extends State<SkillsTab> {
       base: skill.base,
       hard: skill.hard,
       extreme: skill.extreme,
-      controller: _controllers[skill.name]!, // manage controllers as before
-      onBaseChanged: (value) =>
-          viewModel.updateAttribute(skill.name, value),
+      controller: _controllers[skill.name]!,
+      onBaseChanged: (value) => viewModel.updateSkill(skill.name, value),
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(

@@ -5,10 +5,18 @@ import '../viewmodels/character_viewmodel.dart';
 class BackgroundTab extends StatelessWidget {
   BackgroundTab({super.key});
 
+  final _controllers = <String, TextEditingController>{};
+
   @override
   Widget build(BuildContext context) {
-    final character = Provider.of<CharacterViewModel>(context).character;
     final viewModel = Provider.of<CharacterViewModel>(context, listen: false);
+    final character = viewModel.character;
+
+    if (character == null) {
+      return const Center(
+        child: Text('No character loaded.\nPlease create or select a character first.'),
+      );
+    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -34,8 +42,6 @@ class BackgroundTab extends StatelessWidget {
     );
   }
 
-  final _controllers = <String, TextEditingController>{};
-
   Widget _buildTextField(String label, String value, Function(String) onChanged) {
     _controllers.putIfAbsent(label, () => TextEditingController(text: value));
 
@@ -44,13 +50,10 @@ class BackgroundTab extends StatelessWidget {
       child: TextField(
         decoration: InputDecoration(labelText: label),
         controller: _controllers[label],
-        onChanged: (val) {
-          onChanged(val);
-        },
+        onChanged: onChanged,
         maxLines: null,
         keyboardType: TextInputType.multiline,
       ),
     );
   }
-
 }
