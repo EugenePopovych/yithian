@@ -5,10 +5,11 @@ import 'package:uuid/uuid.dart';
 import '../models/hive_character.dart';
 import '../models/character.dart';
 import '../viewmodels/character_viewmodel.dart';
-import '../screens/character_sheet_screen.dart';
 
 class CharacterListScreen extends StatefulWidget {
-  const CharacterListScreen({super.key});
+  final VoidCallback? onCharacterSelected; // <-- ADD THIS
+
+  const CharacterListScreen({super.key, this.onCharacterSelected});
 
   @override
   State<CharacterListScreen> createState() => _CharacterListScreenState();
@@ -36,8 +37,7 @@ class _CharacterListScreenState extends State<CharacterListScreen> {
   Future<void> _createNewCharacter() async {
     String baseName = 'Investigator';
     int sameNames = characters.where((c) => c.name.startsWith(baseName)).length;
-    String name =
-        sameNames > 0 ? '$baseName (version ${sameNames + 1})' : baseName;
+    String name = sameNames > 0 ? '$baseName (version ${sameNames + 1})' : baseName;
 
     final newCharacter = Character(
       name: name,
@@ -64,22 +64,14 @@ class _CharacterListScreenState extends State<CharacterListScreen> {
 
     _refreshList(); // Keep the list in sync
 
-    if (!mounted) return;
-
-    // Go to the character sheet
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const CharacterSheetScreen(),
-      ),
-    );
+    // Call the callback to switch to the sheet tab!
+    widget.onCharacterSelected?.call();
   }
 
   void _deleteCharacter(int index) async {
     final key = hiveKeys[index];
     final viewModel = Provider.of<CharacterViewModel>(context, listen: false);
 
-    // If the deleted character is the current one, clear from viewmodel
     if (viewModel.hasCharacter && viewModel.characterId == key) {
       viewModel.clearCharacter();
     }
@@ -88,23 +80,14 @@ class _CharacterListScreenState extends State<CharacterListScreen> {
     _refreshList();
   }
 
-
   Future<void> _openCharacter(int index) async {
     final key = hiveKeys[index];
     final viewModel = Provider.of<CharacterViewModel>(context, listen: false);
 
-    // Load from Hive and set as current in viewmodel
     await viewModel.loadCharacter(key);
 
-    if (!mounted) return;
-
-    // Go to the sheet
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const CharacterSheetScreen(),
-      ),
-    );
+    // Call the callback to switch to the sheet tab!
+    widget.onCharacterSelected?.call();
   }
 
   @override

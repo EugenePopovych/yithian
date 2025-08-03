@@ -25,17 +25,19 @@ class _MainScreenState extends State<MainScreen> {
       // No character: force Characters tab
       setState(() => _selectedIndex = 0);
     }
-    if (hasCharacter && _selectedIndex == 0) {
-      // If a character was loaded and user is on Characters, optionally auto-switch to Sheet:
-      // setState(() => _selectedIndex = 1);
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     final hasCharacter = context.watch<CharacterViewModel>().hasCharacter;
     final screens = [
-      const CharacterListScreen(),
+      CharacterListScreen(
+        onCharacterSelected: () {
+          setState(() {
+            _selectedIndex = 1; // Switch to Sheet tab
+          });
+        },
+      ),
       const CharacterSheetScreen(),
       const DiceRollerScreen(),
       const SettingsScreen(),
@@ -49,7 +51,6 @@ class _MainScreenState extends State<MainScreen> {
         onTap: (int index) {
           // Only allow Sheet tab if character is loaded
           if (index == 1 && !hasCharacter) {
-            // Optional: Show a hint/snackbar
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("Please create or load a character first.")),
             );
