@@ -2,11 +2,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:coc_sheet/models/character.dart';
 import 'package:coc_sheet/models/attribute.dart';
 import 'package:coc_sheet/models/skill.dart';
+import 'package:coc_sheet/models/sheet_status.dart';
 
 void main() {
   group('Character Model Tests', () {
     test('Character should initialize with correct general info', () {
       final character = Character(
+        sheetId: 't1',
+        sheetStatus: SheetStatus.active,
+        sheetName: 'Sheet 1',
         name: "John Doe",
         age: 32,
         pronouns: "He/Him",
@@ -20,7 +24,7 @@ void main() {
         currentMP: 8,
         startingMP: 8,
         currentLuck: 50,
-        attributes: [],
+        attributes: const [],
         skills: [Skill(name: "Cthulhu Mythos", base: 10)],
       );
 
@@ -32,6 +36,9 @@ void main() {
 
     test('Updating Cthulhu Mythos skill should correctly update maxSanity', () {
       final character = Character(
+        sheetId: 't2',
+        sheetStatus: SheetStatus.active,
+        sheetName: 'Sheet 2',
         name: "John Doe",
         age: 32,
         pronouns: "He/Him",
@@ -45,7 +52,7 @@ void main() {
         currentMP: 8,
         startingMP: 8,
         currentLuck: 50,
-        attributes: [],
+        attributes: const [],
         skills: [Skill(name: "Cthulhu Mythos", base: 20)],
       );
 
@@ -57,6 +64,9 @@ void main() {
 
     test('Current HP should not exceed Max HP', () {
       final character = Character(
+        sheetId: 't3',
+        sheetStatus: SheetStatus.active,
+        sheetName: 'Sheet 3',
         name: "John Doe",
         age: 32,
         pronouns: "He/Him",
@@ -70,8 +80,8 @@ void main() {
         currentMP: 8,
         startingMP: 8,
         currentLuck: 50,
-        attributes: [],
-        skills: [],
+        attributes: const [],
+        skills: const [],
       );
 
       expect(character.currentHP, lessThanOrEqualTo(character.maxHP));
@@ -79,6 +89,9 @@ void main() {
 
     test('Sanity should not exceed Max Sanity', () {
       final character = Character(
+        sheetId: 't4',
+        sheetStatus: SheetStatus.active,
+        sheetName: 'Sheet 4',
         name: "John Doe",
         age: 32,
         pronouns: "He/Him",
@@ -92,8 +105,8 @@ void main() {
         currentMP: 8,
         startingMP: 8,
         currentLuck: 50,
-        attributes: [],
-        skills: [],
+        attributes: const [],
+        skills: const [],
       );
 
       expect(character.currentSanity, lessThanOrEqualTo(character.maxSanity));
@@ -101,6 +114,9 @@ void main() {
 
     test('Status flags should toggle correctly', () {
       final character = Character(
+        sheetId: 't5',
+        sheetStatus: SheetStatus.active,
+        sheetName: 'Sheet 5',
         name: "John Doe",
         age: 32,
         pronouns: "He/Him",
@@ -114,8 +130,8 @@ void main() {
         currentMP: 8,
         startingMP: 8,
         currentLuck: 50,
-        attributes: [],
-        skills: [],
+        attributes: const [],
+        skills: const [],
       );
 
       expect(character.isDying, isFalse);
@@ -131,6 +147,9 @@ void main() {
 
     test('Background fields should be correctly stored and retrievable', () {
       final character = Character(
+        sheetId: 't6',
+        sheetStatus: SheetStatus.active,
+        sheetName: 'Sheet 6',
         name: "John Doe",
         age: 32,
         pronouns: "He/Him",
@@ -144,8 +163,8 @@ void main() {
         currentMP: 8,
         startingMP: 8,
         currentLuck: 50,
-        attributes: [],
-        skills: [],
+        attributes: const [],
+        skills: const [],
         personalDescription: "A tall man with sharp eyes.",
         ideologyAndBeliefs: "Trust no one.",
         significantPeople: "Detective Harrison, his mentor.",
@@ -168,6 +187,9 @@ void main() {
 
     test('Movement Rate should be 9 when DEX and STR are greater than SIZ', () {
       final character = Character(
+        sheetId: 't7',
+        sheetStatus: SheetStatus.active,
+        sheetName: 'Sheet 7',
         name: "Investigator",
         age: 30,
         pronouns: "They/Them",
@@ -186,7 +208,7 @@ void main() {
           Attribute(name: "Dexterity", base: 50),
           Attribute(name: "Size", base: 40),
         ],
-        skills: [],
+        skills: const [],
       );
 
       expect(character.movementRate, equals(9));
@@ -194,6 +216,9 @@ void main() {
 
     test('Movement Rate should be 8 when either DEX or STR is equal to SIZ', () {
       final character = Character(
+        sheetId: 't8',
+        sheetStatus: SheetStatus.active,
+        sheetName: 'Sheet 8',
         name: "Investigator",
         age: 30,
         pronouns: "They/Them",
@@ -207,12 +232,12 @@ void main() {
         currentMP: 10,
         startingMP: 10,
         currentLuck: 50,
-        attributes: [
+        attributes:  [
           Attribute(name: "Strength", base: 40),
           Attribute(name: "Dexterity", base: 50),
           Attribute(name: "Size", base: 40),
         ],
-        skills: [],
+        skills: const [],
       );
 
       expect(character.movementRate, equals(8));
@@ -220,6 +245,9 @@ void main() {
 
     test('Movement Rate should be 7 when both DEX and STR are less than SIZ', () {
       final character = Character(
+        sheetId: 't9',
+        sheetStatus: SheetStatus.active,
+        sheetName: 'Sheet 9',
         name: "Investigator",
         age: 30,
         pronouns: "They/Them",
@@ -233,15 +261,24 @@ void main() {
         currentMP: 10,
         startingMP: 10,
         currentLuck: 50,
-        attributes: [
+        attributes:  [
           Attribute(name: "Strength", base: 30),
           Attribute(name: "Dexterity", base: 30),
           Attribute(name: "Size", base: 40),
         ],
-        skills: [],
+        skills: const [],
       );
 
       expect(character.movementRate, equals(7));
+    });
+
+    // New: SheetStatus.isDraft behavior
+    test('SheetStatus isDraft helper works', () {
+      expect(SheetStatus.active.isDraft, isFalse);
+      expect(SheetStatus.archived.isDraft, isFalse);
+      expect(SheetStatus.draft_classic.isDraft, isTrue);
+      expect(SheetStatus.draft_points.isDraft, isTrue);
+      expect(SheetStatus.draft_free.isDraft, isTrue);
     });
   });
 }

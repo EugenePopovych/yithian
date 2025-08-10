@@ -1,33 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'models/hive_character.dart';
-import 'models/hive_attribute.dart';
-import 'models/hive_skill.dart';
-import 'viewmodels/character_viewmodel.dart';
-import 'screens/main_screen.dart';
-import 'theme_light.dart';
+
+import 'package:coc_sheet/services/hive_init.dart';
+import 'package:coc_sheet/services/hive_character_storage.dart';
+import 'package:coc_sheet/viewmodels/character_viewmodel.dart';
+import 'package:coc_sheet/screens/main_screen.dart';
+import 'package:coc_sheet/theme_light.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Hive.initFlutter();
-  Hive.registerAdapter(HiveCharacterAdapter());
-  Hive.registerAdapter(HiveAttributeAdapter());
-  Hive.registerAdapter(HiveSkillAdapter());
-  await Hive.openBox<HiveCharacter>('characters');
-  await Hive.openBox('settings');
-  runApp(const MyApp());
+  await initHive();
+  runApp(const CocSheetApp());
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+class CocSheetApp extends StatefulWidget {
+  const CocSheetApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  State<CocSheetApp> createState() => _CocSheetAppState();
 }
 
-class _MyAppState extends State<MyApp> {
-  final CharacterViewModel _viewModel = CharacterViewModel();
+class _CocSheetAppState extends State<CocSheetApp> {
+  late final CharacterViewModel _viewModel;
   bool _initialized = false;
 
   @override
@@ -37,10 +31,9 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _initAsync() async {
+    _viewModel = CharacterViewModel(HiveCharacterStorage());
     await _viewModel.init();
-    setState(() {
-      _initialized = true;
-    });
+    setState(() => _initialized = true);
   }
 
   @override

@@ -1,8 +1,12 @@
 import 'attribute.dart';
 import 'skill.dart';
+import 'sheet_status.dart';
 
 class Character {
+  final String sheetId;
+  SheetStatus sheetStatus;
   String sheetName;
+
   String name;
   int age;
   String pronouns;
@@ -44,6 +48,8 @@ class Character {
   bool isDying;
 
   Character({
+    required this.sheetId,
+    required this.sheetStatus,
     required this.sheetName,
     required this.name,
     required this.age,
@@ -110,5 +116,84 @@ class Character {
 
   void updateLuck(int luck) {
     currentLuck = luck;
+  }
+
+  Character copyWith({
+    String? sheetId,
+    SheetStatus? sheetStatus,
+    String? sheetName,
+    String? name,
+    int? age,
+    String? pronouns,
+    String? birthplace,
+    String? occupation,
+    String? residence,
+    int? currentHP,
+    int? maxHP,
+    int? currentSanity,
+    int? startingSanity,
+    int? currentMP,
+    int? startingMP,
+    int? currentLuck,
+    List<Attribute>? attributes,
+    List<Skill>? skills,
+    String? personalDescription,
+    String? ideologyAndBeliefs,
+    String? significantPeople,
+    String? meaningfulLocations,
+    String? treasuredPossessions,
+    String? traitsAndMannerisms,
+    String? injuriesAndScars,
+    String? phobiasAndManias,
+    String? arcaneTomesAndSpells,
+    String? encountersWithEntities,
+    String? gear,
+    String? wealth,
+    String? notes,
+    bool? hasMajorWound,
+    bool? isIndefinitelyInsane,
+    bool? isTemporarilyInsane,
+    bool? isUnconscious,
+    bool? isDying,
+  }) {
+    return Character(
+      sheetId: sheetId ?? this.sheetId,
+      sheetStatus: sheetStatus ?? this.sheetStatus,
+      sheetName: sheetName ?? this.sheetName,
+      name: name ?? this.name,
+      age: age ?? this.age,
+      pronouns: pronouns ?? this.pronouns,
+      birthplace: birthplace ?? this.birthplace,
+      occupation: occupation ?? this.occupation,
+      residence: residence ?? this.residence,
+      currentHP: currentHP ?? this.currentHP,
+      maxHP: maxHP ?? this.maxHP,
+      currentSanity: currentSanity ?? this.currentSanity,
+      startingSanity: startingSanity ?? this.startingSanity,
+      currentMP: currentMP ?? this.currentMP,
+      startingMP: startingMP ?? this.startingMP,
+      currentLuck: currentLuck ?? this.currentLuck,
+      attributes: attributes ?? this.attributes,
+      skills: skills ?? this.skills,
+      personalDescription: personalDescription ?? this.personalDescription,
+      ideologyAndBeliefs: ideologyAndBeliefs ?? this.ideologyAndBeliefs,
+      significantPeople: significantPeople ?? this.significantPeople,
+      meaningfulLocations: meaningfulLocations ?? this.meaningfulLocations,
+      treasuredPossessions: treasuredPossessions ?? this.treasuredPossessions,
+      traitsAndMannerisms: traitsAndMannerisms ?? this.traitsAndMannerisms,
+      injuriesAndScars: injuriesAndScars ?? this.injuriesAndScars,
+      phobiasAndManias: phobiasAndManias ?? this.phobiasAndManias,
+      arcaneTomesAndSpells: arcaneTomesAndSpells ?? this.arcaneTomesAndSpells,
+      encountersWithEntities:
+          encountersWithEntities ?? this.encountersWithEntities,
+      gear: gear ?? this.gear,
+      wealth: wealth ?? this.wealth,
+      notes: notes ?? this.notes,
+      hasMajorWound: hasMajorWound ?? this.hasMajorWound,
+      isIndefinitelyInsane: isIndefinitelyInsane ?? this.isIndefinitelyInsane,
+      isTemporarilyInsane: isTemporarilyInsane ?? this.isTemporarilyInsane,
+      isUnconscious: isUnconscious ?? this.isUnconscious,
+      isDying: isDying ?? this.isDying,
+    );
   }
 }

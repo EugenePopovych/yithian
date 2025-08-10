@@ -1,74 +1,105 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
-import '../models/character.dart';
-import '../models/hive_character.dart';
+import 'package:coc_sheet/models/character.dart';
+import 'package:coc_sheet/models/sheet_status.dart';
+import 'package:coc_sheet/services/character_storage.dart';
+import 'package:coc_sheet/services/sheet_id_generator.dart';
 
 class CharacterViewModel extends ChangeNotifier {
-  static const String lastCharacterIdKey = 'lastCharacterId';
+  CharacterViewModel(this._storage, {SheetIdGenerator? ids})
+    : _ids = ids ?? UuidSheetIdGenerator();
+
+  final CharacterStorage _storage;
+  final SheetIdGenerator _ids;
 
   Character? _character;
-  String? _characterId;
 
   Character? get character => _character;
-  String? get characterId => _characterId;
+  String? get characterId => _character?.sheetId;
   bool get hasCharacter => _character != null;
 
   Future<void> init() async {
-    var box = Hive.box<HiveCharacter>('characters');
-    var settingsBox = Hive.box('settings');
-    String? lastId = settingsBox.get(lastCharacterIdKey) as String?;
-    if (lastId != null && box.containsKey(lastId)) {
-      await loadCharacter(lastId);
-    } else if (box.isNotEmpty) {
-      var firstEntry = box.toMap().entries.first;
-      await loadCharacter(firstEntry.key as String);
-    } else {
-      _character = null;
-      _characterId = null;
+    // 1) Try the most recent sheet stored by CharacterStorage
+    final recent = await _storage.getRecent();
+    if (recent != null) {
+      _character = recent;
       notifyListeners();
+      return;
     }
+
+    // 2) Fallback to first available character (active+archived by default)
+    final list = await _storage.getCharacters().first;
+    if (list.isNotEmpty) {
+      _character = list.first;
+      notifyListeners();
+      return;
+    }
+
+    // 3) Nothing found
+    _character = null;
+    notifyListeners();
   }
 
   Future<void> loadCharacter(String id) async {
-    final box = Hive.box<HiveCharacter>('characters');
-    final settingsBox = Hive.box('settings');
-    final hiveChar = box.get(id);
-    if (hiveChar != null) {
-      _character = hiveChar.toCharacter();
-      _characterId = id;
-      await settingsBox.put(lastCharacterIdKey, id);
-      notifyListeners();
-    }
-  }
+    // Fetch a snapshot including drafts to ensure we can load any sheet
+    final all = await _storage
+        .getCharacters(statuses: SheetStatus.values.toSet())
+        .first;
+    final found = all.where((c) => c.sheetId == id).toList();
+    if (found.isEmpty) return;
 
-  Future<void> createCharacter(Character newChar, {String? id}) async {
-    final box = Hive.box<HiveCharacter>('characters');
-    final settingsBox = Hive.box('settings');
-    final newId = id ?? UniqueKey().toString();
-    await box.put(newId, HiveCharacter.fromCharacter(newChar));
-    await settingsBox.put(lastCharacterIdKey, newId);
-    _character = newChar;
-    _characterId = newId;
+    _character = found.first;
     notifyListeners();
+
+    // Mark as recent via store (no-op data wise, updates “recent” in storage)
     await saveCharacter();
   }
 
-  Future<void> saveCharacter() async {
-    if (_characterId == null || _character == null) return;
-    final box = Hive.box<HiveCharacter>('characters');
-    await box.put(_characterId!, HiveCharacter.fromCharacter(_character!));
+  Future<void> createCharacter({
+    String? name,
+    String? occupation,
+    SheetStatus? status,
+  }) async {
+    final id = _ids.newId();
+
+    final c = Character(
+      sheetId: id,
+      sheetStatus: status ?? SheetStatus.draft_classic,
+      sheetName: (name != null && name.isNotEmpty) ? name : 'New Sheet',
+      name: name ?? '',
+      age: 0,
+      pronouns: '',
+      birthplace: '',
+      occupation: occupation ?? '',
+      residence: '',
+      currentHP: 0,
+      maxHP: 0,
+      currentSanity: 0,
+      startingSanity: 0,
+      currentMP: 0,
+      startingMP: 0,
+      currentLuck: 0,
+      attributes: [],
+      skills: [],
+    );
+
+    await _storage.store(c); // persists and marks as recent
+    _character = c;
+    notifyListeners();
   }
 
-  void setCharacter(Character newCharacter, {String? id}) {
+  Future<void> saveCharacter() async {
+    if (_character == null) return;
+    await _storage.store(_character!);
+  }
+
+  void setCharacter(Character newCharacter) {
     _character = newCharacter;
-    _characterId = id;
     notifyListeners();
     saveCharacter();
   }
 
   void clearCharacter() {
     _character = null;
-    _characterId = null;
     notifyListeners();
   }
 

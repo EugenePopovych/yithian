@@ -51,13 +51,14 @@ class HiveCharacterAdapter extends TypeAdapter<HiveCharacter> {
       isTemporarilyInsane: fields[31] as bool,
       isUnconscious: fields[32] as bool,
       isDying: fields[33] as bool,
+      sheetStatusCode: fields[34] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, HiveCharacter obj) {
     writer
-      ..writeByte(34)
+      ..writeByte(35)
       ..writeByte(0)
       ..write(obj.sheetName)
       ..writeByte(1)
@@ -125,7 +126,9 @@ class HiveCharacterAdapter extends TypeAdapter<HiveCharacter> {
       ..writeByte(32)
       ..write(obj.isUnconscious)
       ..writeByte(33)
-      ..write(obj.isDying);
+      ..write(obj.isDying)
+      ..writeByte(34)
+      ..write(obj.sheetStatusCode);
   }
 
   @override
