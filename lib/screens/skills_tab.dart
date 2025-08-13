@@ -1,10 +1,14 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:coc_sheet/models/skill.dart';
 import 'package:coc_sheet/models/sheet_status.dart';
+import 'package:coc_sheet/models/creation_update_event.dart';
+import 'package:coc_sheet/models/creation_rule_set.dart';
 import 'package:coc_sheet/viewmodels/character_viewmodel.dart';
 import 'package:coc_sheet/widgets/stat_row.dart';
 import 'package:coc_sheet/widgets/creation_row.dart';
+import 'package:coc_sheet/widgets/inline_creation_feedback.dart';
 import 'package:coc_sheet/screens/dice_roller_screen.dart';
 
 class SkillsTab extends StatefulWidget {
@@ -16,11 +20,13 @@ class SkillsTab extends StatefulWidget {
 
 class _SkillsTabState extends State<SkillsTab> {
   final Map<String, TextEditingController> _controllers = {};
+  // Positioning relative to the whole StatRow (unchanged layout).
+  // Keep the same right anchor…
+  static const double _bubbleRightInset = 120; // px from row right edge
 
-  static const double _lockIconRightInset =
-      124; // px from the row’s right edge to the TextField’s right edge
-  static const double _lockIconTopInset =
-      10; // px from the row’s top to the TextField’s top
+  // Lift the bubble *above* the TextField height by ~8px
+  static const double _textFieldHeight = 36; // match your field height
+  static const double _bubbleTopInset = -(_textFieldHeight + 8);
 
   @override
   void dispose() {
@@ -69,33 +75,40 @@ class _SkillsTabState extends State<SkillsTab> {
           Text("Skills", style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
 
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: columns.map((columnSkills) {
-              return Container(
-                width: rowWidth,
-                margin: const EdgeInsets.only(right: 16),
-                padding: const EdgeInsets.all(8.0),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  children: columnSkills
-                      .map(
-                        (skill) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4.0),
-                          child: _buildSkillRow(
-                            skill,
-                            viewModel,
-                            draft: character.sheetStatus.isDraft,
-                          ),
-                        ),
-                      )
-                      .toList(),
-                ),
+          // Rebuild the skills grid when the last creation update changes
+          ValueListenableBuilder<CreationUpdateEvent?>(
+            valueListenable: viewModel.lastCreationUpdate,
+            builder: (context, event, _) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: columns.map((columnSkills) {
+                  return Container(
+                    width: rowWidth,
+                    margin: const EdgeInsets.only(right: 16),
+                    padding: const EdgeInsets.all(8.0),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      children: columnSkills
+                          .map(
+                            (skill) => Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 4.0),
+                              child: _buildSkillRow(
+                                skill,
+                                viewModel,
+                                draft: character.sheetStatus.isDraft,
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  );
+                }).toList(),
               );
-            }).toList(),
+            },
           ),
         ],
       ),
@@ -103,50 +116,98 @@ class _SkillsTabState extends State<SkillsTab> {
   }
 
   Widget _buildSkillRow(
-    Skill skill,
-    CharacterViewModel viewModel, {
-    required bool draft,
-  }) {
-    // Ensure controller exists and reflects current model value
-    _controllers.putIfAbsent(
-      skill.name,
-      () => TextEditingController(text: skill.base.toString()),
-    );
-    final ctl = _controllers[skill.name]!;
-    final textShouldBe = skill.base.toString();
-    if (ctl.text != textShouldBe) {
-      // keep UI in sync (e.g., after clamping/rejecting changes)
-      ctl.text = textShouldBe;
-      ctl.selection = TextSelection.fromPosition(
-        TextPosition(offset: ctl.text.length),
-      );
-    }
-
-    final isCalculated =
-        isCalculatedDuringDraft(draft: draft, skillName: skill.name);
-    return StatRow(
-      name: skill.name,
-      base: skill.base,
-      hard: skill.hard,
-      extreme: skill.extreme,
-      controller: ctl,
-      enabled: !isCalculated, // <—
-      locked: isCalculated, // <—
-      onBaseChanged: (value) => viewModel.updateSkill(skill.name, value),
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => DiceRollerScreen(
-              skillName: skill.name,
-              base: skill.base,
-              hard: skill.base ~/ 2,
-              extreme: skill.base ~/ 5,
-            ),
-          ),
-        );
-      },
+  Skill skill,
+  CharacterViewModel viewModel, {
+  required bool draft,
+}) {
+  // Ensure controller exists and reflects current model value
+  _controllers.putIfAbsent(
+    skill.name,
+    () => TextEditingController(text: skill.base.toString()),
+  );
+  final ctl = _controllers[skill.name]!;
+  final textShouldBe = skill.base.toString();
+  if (ctl.text != textShouldBe) {
+    ctl.text = textShouldBe;
+    ctl.selection = TextSelection.fromPosition(
+      TextPosition(offset: ctl.text.length),
     );
   }
+
+  final isCalculated =
+      isCalculatedDuringDraft(draft: draft, skillName: skill.name);
+
+  // Inline feedback: show only when the last creation update targets this skill
+  final evt = viewModel.lastCreationUpdate.value;
+  final bool showFeedback = evt != null &&
+    evt.target == ChangeTarget.skill &&
+    evt.name == skill.name &&
+    (!evt.applied || evt.codes.isNotEmpty);
+
+  // Determine message & severity
+  final String feedbackText = showFeedback
+      ? (evt.friendlyMessages.isNotEmpty
+          ? evt.friendlyMessages.first
+          : (!evt.applied ? 'Change rejected.' : 'Applied with limits.'))
+      : '';
+  final bool isError = showFeedback && !evt.applied;
+  final bool isWarn = showFeedback && evt.applied && evt.codes.isNotEmpty;
+
+  // Auto-dismiss after a short delay if the same event is still current
+  if (showFeedback) {
+    final currentEvt = evt;
+    Timer(const Duration(seconds: 3), () {
+      if (viewModel.lastCreationUpdate.value == currentEvt) {
+        viewModel.lastCreationUpdate.value = null;
+      }
+    });
+  }
+
+  // Keep the layout identical: StatRow as base, overlay extras with Stack+Positioned.
+  return Stack(
+    clipBehavior: Clip.none,
+    children: [
+      StatRow(
+        name: skill.name,
+        base: skill.base,
+        hard: skill.hard,
+        extreme: skill.extreme,
+        controller: ctl,
+        enabled: !isCalculated, // built-in: disables focus/input
+        locked: isCalculated,   // shows lock icon in the TextField
+        onBaseChanged: (value) => viewModel.updateSkill(skill.name, value),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => DiceRollerScreen(
+                skillName: skill.name,
+                base: skill.base,
+                hard: skill.base ~/ 2,
+                extreme: skill.base ~/ 5,
+              ),
+            ),
+          );
+        },
+      ),
+
+      // Inline bubble anchored near the TextField (no layout changes)
+      if (showFeedback)
+        Positioned(
+          right: _bubbleRightInset,
+          top: _bubbleTopInset,
+          child: IgnorePointer(
+            ignoring: true, // don’t steal taps
+            child: InlineCreationFeedback(
+              message: feedbackText,
+              isError: isError,
+              isWarning: isWarn,
+            ),
+          ),
+        ),
+    ],
+  );
+}
+
 }
 
 // Helper: which skills are calculated during creation (locked by rules)

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:coc_sheet/models/character.dart';
 import 'package:coc_sheet/models/sheet_status.dart';
 import 'package:coc_sheet/models/creation_rule_set.dart';
+import 'package:coc_sheet/models/creation_update_event.dart';
 import 'package:coc_sheet/services/character_storage.dart';
 import 'package:coc_sheet/services/sheet_id_generator.dart';
 
@@ -16,6 +17,11 @@ class CharacterViewModel extends ChangeNotifier {
 
   Character? _character;
   CreationRuleSet? _rules;
+
+  /// Emits the latest creation-time update (accepted/partial/rejected).
+  /// UI can listen to this to show inline messages and snap inputs back.
+  final ValueNotifier<CreationUpdateEvent?> lastCreationUpdate =
+      ValueNotifier<CreationUpdateEvent?>(null);
 
   Character? get character => _character;
   bool get hasCharacter => _character != null;
@@ -80,7 +86,8 @@ class CharacterViewModel extends ChangeNotifier {
       skills: [],
     );
 
-    _setCharacterInternal(c, callInitialize: true, initName: name, initOccupation: occupation);
+    _setCharacterInternal(c,
+        callInitialize: true, initName: name, initOccupation: occupation);
     await _storage.store(_character!);
     notifyListeners();
   }
@@ -96,6 +103,12 @@ class CharacterViewModel extends ChangeNotifier {
   Future<void> deleteById(String sheetId) async {
     await _storage.delete(sheetId);
     if (_character?.sheetId == sheetId) clearCharacter();
+  }
+
+  @override
+  void dispose() {
+    lastCreationUpdate.dispose();
+    super.dispose();
   }
 
   // -------- internal helpers --------
@@ -116,7 +129,8 @@ class CharacterViewModel extends ChangeNotifier {
       rs.bind(c);
       rs.onEnter();
       if (callInitialize) {
-        rs.initialize(sheetName: c.sheetName, name: initName, occupation: initOccupation);
+        rs.initialize(
+            sheetName: c.sheetName, name: initName, occupation: initOccupation);
       }
       _rules = rs;
     }
@@ -211,26 +225,71 @@ class CharacterViewModel extends ChangeNotifier {
 
   void updateAttribute(String name, int newValue) {
     if (_character == null) return;
+
     if (_rules != null) {
       final res = _rules!.update(CreationChange.attribute(name, newValue));
-      if (!res.applied) return;
+      final event = CreationUpdateEvent(
+        target: ChangeTarget.attribute,
+        name: name,
+        attemptedValue: newValue,
+        result: res,
+      );
+
+      if (!res.applied) {
+        // For completeness (rare in classic, but future-proof):
+        lastCreationUpdate.value = event;
+        notifyListeners();
+        return;
+      }
+
       _character!.updateAttribute(name, res.effectiveValue ?? newValue);
+
+      // Typically no messages here, but clear just in case.
+      if ((res.messages.isNotEmpty)) {
+        lastCreationUpdate.value = event;
+      } else {
+        lastCreationUpdate.value = null;
+      }
     } else {
       _character!.updateAttribute(name, newValue);
     }
+
     notifyListeners();
     saveCharacter();
   }
 
   void updateSkill(String name, int newValue) {
     if (_character == null) return;
+
     if (_rules != null) {
       final res = _rules!.update(CreationChange.skill(name, newValue));
-      if (!res.applied) return;
+      final event = CreationUpdateEvent(
+        target: ChangeTarget.skill,
+        name: name,
+        attemptedValue: newValue,
+        result: res,
+      );
+
+      if (!res.applied) {
+        // Rejected: emit event and rebuild so the editor snaps back.
+        lastCreationUpdate.value = event;
+        notifyListeners();
+        return; // don’t mutate model or save
+      }
+
+      // Applied: update the model.
       _character!.updateSkill(name, res.effectiveValue ?? newValue);
+
+      // If there were warnings (e.g., partial due to pools), emit; else clear.
+      if ((res.messages.isNotEmpty)) {
+        lastCreationUpdate.value = event;
+      } else {
+        lastCreationUpdate.value = null;
+      }
     } else {
       _character!.updateSkill(name, newValue);
     }
+
     notifyListeners();
     saveCharacter();
   }
@@ -268,8 +327,12 @@ class CharacterViewModel extends ChangeNotifier {
   }) {
     if (_character == null) return;
     if (hasMajorWound != null) _character!.hasMajorWound = hasMajorWound;
-    if (isIndefinitelyInsane != null) _character!.isIndefinitelyInsane = isIndefinitelyInsane;
-    if (isTemporarilyInsane != null) _character!.isTemporarilyInsane = isTemporarilyInsane;
+    if (isIndefinitelyInsane != null) {
+      _character!.isIndefinitelyInsane = isIndefinitelyInsane;
+    }
+    if (isTemporarilyInsane != null) {
+      _character!.isTemporarilyInsane = isTemporarilyInsane;
+    }
     if (isUnconscious != null) _character!.isUnconscious = isUnconscious;
     if (isDying != null) _character!.isDying = isDying;
     notifyListeners();
@@ -292,16 +355,36 @@ class CharacterViewModel extends ChangeNotifier {
     String? notes,
   }) {
     if (_character == null) return;
-    if (personalDescription != null) _character!.personalDescription = personalDescription;
-    if (ideologyAndBeliefs != null) _character!.ideologyAndBeliefs = ideologyAndBeliefs;
-    if (significantPeople != null) _character!.significantPeople = significantPeople;
-    if (meaningfulLocations != null) _character!.meaningfulLocations = meaningfulLocations;
-    if (treasuredPossessions != null) _character!.treasuredPossessions = treasuredPossessions;
-    if (traitsAndMannerisms != null) _character!.traitsAndMannerisms = traitsAndMannerisms;
-    if (injuriesAndScars != null) _character!.injuriesAndScars = injuriesAndScars;
-    if (phobiasAndManias != null) _character!.phobiasAndManias = phobiasAndManias;
-    if (arcaneTomesAndSpells != null) _character!.arcaneTomesAndSpells = arcaneTomesAndSpells;
-    if (encountersWithEntities != null) _character!.encountersWithEntities = encountersWithEntities;
+    if (personalDescription != null) {
+      _character!.personalDescription = personalDescription;
+    }
+    if (ideologyAndBeliefs != null) {
+      _character!.ideologyAndBeliefs = ideologyAndBeliefs;
+    }
+    if (significantPeople != null) {
+      _character!.significantPeople = significantPeople;
+    }
+    if (meaningfulLocations != null) {
+      _character!.meaningfulLocations = meaningfulLocations;
+    }
+    if (treasuredPossessions != null) {
+      _character!.treasuredPossessions = treasuredPossessions;
+    }
+    if (traitsAndMannerisms != null) {
+      _character!.traitsAndMannerisms = traitsAndMannerisms;
+    }
+    if (injuriesAndScars != null) {
+      _character!.injuriesAndScars = injuriesAndScars;
+    }
+    if (phobiasAndManias != null) {
+      _character!.phobiasAndManias = phobiasAndManias;
+    }
+    if (arcaneTomesAndSpells != null) {
+      _character!.arcaneTomesAndSpells = arcaneTomesAndSpells;
+    }
+    if (encountersWithEntities != null) {
+      _character!.encountersWithEntities = encountersWithEntities;
+    }
     if (gear != null) _character!.gear = gear;
     if (wealth != null) _character!.wealth = wealth;
     if (notes != null) _character!.notes = notes;

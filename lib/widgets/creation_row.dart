@@ -128,13 +128,16 @@ class _CreationAttributesRow extends StatelessWidget {
           Expanded(child: Text('Creation: $label')),
           // renamed
           ElevatedButton(
-            onPressed: () => context.read<CharacterViewModel>().rollAttributes(),
+            onPressed: () =>
+                context.read<CharacterViewModel>().rollAttributes(),
             child: const Text('Reroll Attributes'), // was: 'Roll Attributes'
           ),
           const SizedBox(width: 8),
           // new: Finish in Attributes tab
           ElevatedButton(
-            onPressed: canFinish ? () => context.read<CharacterViewModel>().finalizeCreation() : null,
+            onPressed: canFinish
+                ? () => context.read<CharacterViewModel>().finalizeCreation()
+                : null,
             child: const Text('Finish'),
           ),
         ],
@@ -152,12 +155,13 @@ class _CreationSkillsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!_isDraft(context)) return const SizedBox.shrink();
 
+    final vm = context.read<CharacterViewModel>();
     final label = _label(context);
     final occ = context
         .select<CharacterViewModel, int?>((vm) => vm.occupationPointsRemaining);
     final per = context
         .select<CharacterViewModel, int?>((vm) => vm.personalPointsRemaining);
-    final canFinalize = context
+    final canFinish = context
         .select<CharacterViewModel, bool>((vm) => vm.canFinalizeCreation);
 
     Widget chip(String title, int? v) => InputChip(
@@ -175,13 +179,15 @@ class _CreationSkillsRow extends StatelessWidget {
           chip('Occupation', occ),
           chip('Personal', per),
           ElevatedButton(
-            onPressed: canFinalize
-                ? () => context.read<CharacterViewModel>().finalizeCreation()
-                : null,
+            onPressed: canFinish ? () => vm.finalizeCreation() : null,
             child: const Text('Finish'),
           ),
-          const Text(
-              '• Above base spends points · CM can’t be increased · Dodge=DEX/2, Own=EDU'),
+          Tooltip(
+            message: 'Above base spends points.\n'
+                'Dodge = DEX/2; Language (Own) = EDU.\n'
+                'Cthulhu Mythos can’t be increased during creation.',
+            child: const Icon(Icons.info_outline),
+          ),
         ],
       ),
     );
