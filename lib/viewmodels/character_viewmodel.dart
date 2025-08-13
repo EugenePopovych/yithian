@@ -1,66 +1,64 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:flutter/foundation.dart';
+
 import 'package:coc_sheet/models/character.dart';
 import 'package:coc_sheet/models/sheet_status.dart';
+import 'package:coc_sheet/models/creation_rule_set.dart';
 import 'package:coc_sheet/services/character_storage.dart';
 import 'package:coc_sheet/services/sheet_id_generator.dart';
 
 class CharacterViewModel extends ChangeNotifier {
   CharacterViewModel(this._storage, {SheetIdGenerator? ids})
-    : _ids = ids ?? UuidSheetIdGenerator();
+      : _ids = ids ?? UuidSheetIdGenerator();
 
   final CharacterStorage _storage;
   final SheetIdGenerator _ids;
 
   Character? _character;
+  CreationRuleSet? _rules;
 
   Character? get character => _character;
-  String? get characterId => _character?.sheetId;
   bool get hasCharacter => _character != null;
 
+  // Expose rule-set driven UI data
+  CreationRuleSet? get rules => _rules;
+  int? get occupationPointsRemaining => _rules?.occupationPointsRemaining;
+  int? get personalPointsRemaining => _rules?.personalPointsRemaining;
+  bool get canFinalizeCreation => _rules?.canFinalize ?? true;
+
   Future<void> init() async {
-    // 1) Try the most recent sheet stored by CharacterStorage
     final recent = await _storage.getRecent();
     if (recent != null) {
-      _character = recent;
-      notifyListeners();
+      _setCharacterInternal(recent);
       return;
     }
-
-    // 2) Fallback to first available character (active+archived by default)
     final list = await _storage.getCharacters().first;
     if (list.isNotEmpty) {
-      _character = list.first;
-      notifyListeners();
+      _setCharacterInternal(list.first);
       return;
     }
-
-    // 3) Nothing found
     _character = null;
+    _rules = null;
     notifyListeners();
   }
 
   Future<void> loadCharacter(String id) async {
-    // Fetch a snapshot including drafts to ensure we can load any sheet
     final all = await _storage
         .getCharacters(statuses: SheetStatus.values.toSet())
         .first;
     final found = all.where((c) => c.sheetId == id).toList();
     if (found.isEmpty) return;
-
-    _character = found.first;
-    notifyListeners();
-
-    // Mark as recent via store (no-op data wise, updates “recent” in storage)
-    await saveCharacter();
+    _setCharacterInternal(found.first);
+    await saveCharacter(); // mark recent
   }
 
+  // Create a new sheet, bind rules, let rules initialize the draft.
   Future<void> createCharacter({
     String? name,
     String? occupation,
     SheetStatus? status,
   }) async {
     final id = _ids.newId();
-
     final c = Character(
       sheetId: id,
       sheetStatus: status ?? SheetStatus.draft_classic,
@@ -82,8 +80,47 @@ class CharacterViewModel extends ChangeNotifier {
       skills: [],
     );
 
-    await _storage.store(c); // persists and marks as recent
+    _setCharacterInternal(c, callInitialize: true, initName: name, initOccupation: occupation);
+    await _storage.store(_character!);
+    notifyListeners();
+  }
+
+  Stream<List<Character>> charactersStream({
+    Set<SheetStatus> statuses = const {
+      SheetStatus.active,
+      SheetStatus.archived
+    },
+  }) =>
+      _storage.getCharacters(statuses: statuses);
+
+  Future<void> deleteById(String sheetId) async {
+    await _storage.delete(sheetId);
+    if (_character?.sheetId == sheetId) clearCharacter();
+  }
+
+  // -------- internal helpers --------
+
+  void _setCharacterInternal(
+    Character c, {
+    bool callInitialize = false,
+    String? initName,
+    String? initOccupation,
+  }) {
     _character = c;
+
+    // Bind a fresh rule set for drafts
+    _rules?.onExit();
+    _rules = null;
+    if (c.sheetStatus.isDraft) {
+      final rs = CreationRules.forStatus(c.sheetStatus);
+      rs.bind(c);
+      rs.onEnter();
+      if (callInitialize) {
+        rs.initialize(sheetName: c.sheetName, name: initName, occupation: initOccupation);
+      }
+      _rules = rs;
+    }
+
     notifyListeners();
   }
 
@@ -93,17 +130,53 @@ class CharacterViewModel extends ChangeNotifier {
   }
 
   void setCharacter(Character newCharacter) {
-    _character = newCharacter;
-    notifyListeners();
+    _setCharacterInternal(newCharacter);
     saveCharacter();
   }
 
   void clearCharacter() {
+    _rules?.onExit();
+    _rules = null;
     _character = null;
     notifyListeners();
   }
 
-  // ------- All update methods auto-save -------
+  // ------- Creation helpers -------
+
+  void rollAttributes() {
+    _rules?.rollAttributes();
+    notifyListeners();
+    saveCharacter();
+  }
+
+  void rollSkills() {
+    _rules?.rollSkills();
+    notifyListeners();
+    saveCharacter();
+  }
+
+  Future<void> finalizeCreation() async {
+    if (_character == null) return;
+    if (_rules != null) {
+      if (!(_rules!.canFinalize)) return;
+      _rules!.finalizeDraft();
+      _rules!.onExit();
+      _rules = null;
+    } else {
+      _character!.sheetStatus = SheetStatus.active;
+    }
+    notifyListeners();
+    await saveCharacter();
+  }
+
+  Future<void> discardCurrent() async {
+    if (_character == null) return;
+    final id = _character!.sheetId;
+    await _storage.delete(id);
+    clearCharacter();
+  }
+
+  // ------- Existing update API routed through rules -------
 
   void updateCharacterSheetName(String newSheetName) {
     if (_character == null) return;
@@ -138,14 +211,26 @@ class CharacterViewModel extends ChangeNotifier {
 
   void updateAttribute(String name, int newValue) {
     if (_character == null) return;
-    _character!.updateAttribute(name, newValue);
+    if (_rules != null) {
+      final res = _rules!.update(CreationChange.attribute(name, newValue));
+      if (!res.applied) return;
+      _character!.updateAttribute(name, res.effectiveValue ?? newValue);
+    } else {
+      _character!.updateAttribute(name, newValue);
+    }
     notifyListeners();
     saveCharacter();
   }
 
   void updateSkill(String name, int newValue) {
     if (_character == null) return;
-    _character!.updateSkill(name, newValue);
+    if (_rules != null) {
+      final res = _rules!.update(CreationChange.skill(name, newValue));
+      if (!res.applied) return;
+      _character!.updateSkill(name, res.effectiveValue ?? newValue);
+    } else {
+      _character!.updateSkill(name, newValue);
+    }
     notifyListeners();
     saveCharacter();
   }

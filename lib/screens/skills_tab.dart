@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../viewmodels/character_viewmodel.dart';
-import '../models/skill.dart';
-import '../widgets/stat_row.dart';
-import 'dice_roller_screen.dart';
+import 'package:coc_sheet/models/skill.dart';
+import 'package:coc_sheet/models/sheet_status.dart';
+import 'package:coc_sheet/viewmodels/character_viewmodel.dart';
+import 'package:coc_sheet/widgets/stat_row.dart';
+import 'package:coc_sheet/widgets/creation_row.dart';
+import 'package:coc_sheet/screens/dice_roller_screen.dart';
 
 class SkillsTab extends StatefulWidget {
   const SkillsTab({super.key});
@@ -14,6 +16,11 @@ class SkillsTab extends StatefulWidget {
 
 class _SkillsTabState extends State<SkillsTab> {
   final Map<String, TextEditingController> _controllers = {};
+
+  static const double _lockIconRightInset =
+      124; // px from the row’s right edge to the TextField’s right edge
+  static const double _lockIconTopInset =
+      10; // px from the row’s top to the TextField’s top
 
   @override
   void dispose() {
@@ -31,13 +38,16 @@ class _SkillsTabState extends State<SkillsTab> {
 
     if (character == null) {
       return const Center(
-        child: Text('No character loaded.\nPlease create or select a character first.'),
+        child: Text(
+          'No character loaded.\nPlease create or select a character first.',
+        ),
       );
     }
 
     const double rowWidth = 346.0;
     final columnsCount = (screenWidth / (rowWidth + 16)).floor().clamp(2, 4);
-    final sortedSkills = [...character.skills]..sort((a, b) => a.name.compareTo(b.name));
+    final sortedSkills = [...character.skills]
+      ..sort((a, b) => a.name.compareTo(b.name));
 
     // Split the sorted list into columns
     final rowsPerColumn = (sortedSkills.length / columnsCount).ceil();
@@ -53,8 +63,12 @@ class _SkillsTabState extends State<SkillsTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Draft-only creation panel for Skills (shows pools + Finish)
+          CreationRow.skills(),
+
           Text("Skills", style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
+
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: columns.map((columnSkills) {
@@ -68,10 +82,16 @@ class _SkillsTabState extends State<SkillsTab> {
                 ),
                 child: Column(
                   children: columnSkills
-                      .map((skill) => Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4.0),
-                            child: _buildSkillRow(skill, viewModel),
-                          ))
+                      .map(
+                        (skill) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: _buildSkillRow(
+                            skill,
+                            viewModel,
+                            draft: character.sheetStatus.isDraft,
+                          ),
+                        ),
+                      )
                       .toList(),
                 ),
               );
@@ -82,15 +102,36 @@ class _SkillsTabState extends State<SkillsTab> {
     );
   }
 
-  Widget _buildSkillRow(Skill skill, CharacterViewModel viewModel) {
-    _controllers.putIfAbsent(skill.name, () => TextEditingController(text: skill.base.toString()));
+  Widget _buildSkillRow(
+    Skill skill,
+    CharacterViewModel viewModel, {
+    required bool draft,
+  }) {
+    // Ensure controller exists and reflects current model value
+    _controllers.putIfAbsent(
+      skill.name,
+      () => TextEditingController(text: skill.base.toString()),
+    );
+    final ctl = _controllers[skill.name]!;
+    final textShouldBe = skill.base.toString();
+    if (ctl.text != textShouldBe) {
+      // keep UI in sync (e.g., after clamping/rejecting changes)
+      ctl.text = textShouldBe;
+      ctl.selection = TextSelection.fromPosition(
+        TextPosition(offset: ctl.text.length),
+      );
+    }
 
+    final isCalculated =
+        isCalculatedDuringDraft(draft: draft, skillName: skill.name);
     return StatRow(
       name: skill.name,
       base: skill.base,
       hard: skill.hard,
       extreme: skill.extreme,
-      controller: _controllers[skill.name]!,
+      controller: ctl,
+      enabled: !isCalculated, // <—
+      locked: isCalculated, // <—
       onBaseChanged: (value) => viewModel.updateSkill(skill.name, value),
       onTap: () {
         Navigator.of(context).push(
@@ -105,5 +146,16 @@ class _SkillsTabState extends State<SkillsTab> {
         );
       },
     );
+  }
+}
+
+// Helper: which skills are calculated during creation (locked by rules)
+bool isCalculatedDuringDraft({required bool draft, required String skillName}) {
+  switch (skillName) {
+    case 'Dodge':
+    case 'Language (Own)':
+      return draft;
+    default:
+      return false;
   }
 }

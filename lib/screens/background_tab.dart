@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../viewmodels/character_viewmodel.dart';
+import 'package:coc_sheet/viewmodels/character_viewmodel.dart';
+import 'package:coc_sheet/widgets/creation_row.dart';
+
 
 class BackgroundTab extends StatelessWidget {
   BackgroundTab({super.key});
@@ -14,7 +16,8 @@ class BackgroundTab extends StatelessWidget {
 
     if (character == null) {
       return const Center(
-        child: Text('No character loaded.\nPlease create or select a character first.'),
+        child: Text(
+            'No character loaded.\nPlease create or select a character first.'),
       );
     }
 
@@ -23,20 +26,55 @@ class BackgroundTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Background Information", style: Theme.of(context).textTheme.titleLarge),
-          _buildTextField("Personal Description", character.personalDescription, (value) => viewModel.updateBackground(personalDescription: value)),
-          _buildTextField("Ideology & Beliefs", character.ideologyAndBeliefs, (value) => viewModel.updateBackground(ideologyAndBeliefs: value)),
-          _buildTextField("Significant People", character.significantPeople, (value) => viewModel.updateBackground(significantPeople: value)),
-          _buildTextField("Meaningful Locations", character.meaningfulLocations, (value) => viewModel.updateBackground(meaningfulLocations: value)),
-          _buildTextField("Treasured Possessions", character.treasuredPossessions, (value) => viewModel.updateBackground(treasuredPossessions: value)),
-          _buildTextField("Traits & Mannerisms", character.traitsAndMannerisms, (value) => viewModel.updateBackground(traitsAndMannerisms: value)),
-          _buildTextField("Injuries & Scars", character.injuriesAndScars, (value) => viewModel.updateBackground(injuriesAndScars: value)),
-          _buildTextField("Phobias & Manias", character.phobiasAndManias, (value) => viewModel.updateBackground(phobiasAndManias: value)),
-          _buildTextField("Arcane Tomes & Spells", character.arcaneTomesAndSpells, (value) => viewModel.updateBackground(arcaneTomesAndSpells: value)),
-          _buildTextField("Encounters with Strange Entities", character.encountersWithEntities, (value) => viewModel.updateBackground(encountersWithEntities: value)),
-          _buildTextField("Gear", character.gear, (value) => viewModel.updateBackground(gear: value)),
-          _buildTextField("Wealth", character.wealth, (value) => viewModel.updateBackground(wealth: value)),
-          _buildTextField("Notes", character.notes, (value) => viewModel.updateBackground(notes: value)),
+          // Draft-only creation panel for Background (shows Finish)
+          CreationRow.background(),
+
+          Text("Background Information",
+              style: Theme.of(context).textTheme.titleLarge),
+          _buildTextField(
+              "Personal Description",
+              character.personalDescription,
+              (value) =>
+                  viewModel.updateBackground(personalDescription: value)),
+          _buildTextField("Ideology & Beliefs", character.ideologyAndBeliefs,
+              (value) => viewModel.updateBackground(ideologyAndBeliefs: value)),
+          _buildTextField("Significant People", character.significantPeople,
+              (value) => viewModel.updateBackground(significantPeople: value)),
+          _buildTextField(
+              "Meaningful Locations",
+              character.meaningfulLocations,
+              (value) =>
+                  viewModel.updateBackground(meaningfulLocations: value)),
+          _buildTextField(
+              "Treasured Possessions",
+              character.treasuredPossessions,
+              (value) =>
+                  viewModel.updateBackground(treasuredPossessions: value)),
+          _buildTextField(
+              "Traits & Mannerisms",
+              character.traitsAndMannerisms,
+              (value) =>
+                  viewModel.updateBackground(traitsAndMannerisms: value)),
+          _buildTextField("Injuries & Scars", character.injuriesAndScars,
+              (value) => viewModel.updateBackground(injuriesAndScars: value)),
+          _buildTextField("Phobias & Manias", character.phobiasAndManias,
+              (value) => viewModel.updateBackground(phobiasAndManias: value)),
+          _buildTextField(
+              "Arcane Tomes & Spells",
+              character.arcaneTomesAndSpells,
+              (value) =>
+                  viewModel.updateBackground(arcaneTomesAndSpells: value)),
+          _buildTextField(
+              "Encounters with Strange Entities",
+              character.encountersWithEntities,
+              (value) =>
+                  viewModel.updateBackground(encountersWithEntities: value)),
+          _buildTextField("Gear", character.gear,
+              (value) => viewModel.updateBackground(gear: value)),
+          _buildTextField("Wealth", character.wealth,
+              (value) => viewModel.updateBackground(wealth: value)),
+          _buildTextField("Notes", character.notes,
+              (value) => viewModel.updateBackground(notes: value)),
         ],
       ),
     );

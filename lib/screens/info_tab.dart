@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../viewmodels/character_viewmodel.dart';
+import 'package:coc_sheet/viewmodels/character_viewmodel.dart';
+import 'package:coc_sheet/widgets/creation_row.dart';
+
 
 class InfoTab extends StatefulWidget {
   const InfoTab({super.key});
@@ -28,15 +30,26 @@ class _InfoTabState extends State<InfoTab> {
 
     if (character == null) {
       return const Center(
-        child: Text('No character loaded.\nPlease create or select a character first.'),
+        child: Text(
+            'No character loaded.\nPlease create or select a character first.'),
       );
     }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
-      child: isWideScreen
-          ? _buildWideLayout(viewModel)
-          : _buildNarrowLayout(viewModel),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Draft-only creation row; becomes a no-op on active sheets
+          CreationRow.info(),
+          const SizedBox(height: 8),
+
+          // Existing layout
+          isWideScreen
+              ? _buildWideLayout(viewModel)
+              : _buildNarrowLayout(viewModel),
+        ],
+      ),
     );
   }
 

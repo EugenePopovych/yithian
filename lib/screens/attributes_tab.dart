@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/attribute.dart';
-import '../viewmodels/character_viewmodel.dart';
-import '../widgets/stat_row.dart';
-import 'dice_roller_screen.dart';
+import 'package:coc_sheet/models/attribute.dart';
+import 'package:coc_sheet/models/sheet_status.dart';
+import 'package:coc_sheet/viewmodels/character_viewmodel.dart';
+import 'package:coc_sheet/widgets/stat_row.dart';
+import 'package:coc_sheet/screens/dice_roller_screen.dart';
+import 'package:coc_sheet/widgets/creation_row.dart';
 
 class AttributesTab extends StatefulWidget {
   const AttributesTab({super.key});
@@ -32,7 +34,8 @@ class _AttributesTabState extends State<AttributesTab> {
 
     if (character == null) {
       return const Center(
-        child: Text('No character loaded.\nPlease create or select a character first.'),
+        child: Text(
+            'No character loaded.\nPlease create or select a character first.'),
       );
     }
 
@@ -41,11 +44,19 @@ class _AttributesTabState extends State<AttributesTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSection("Health, Sanity, Magic Points", _buildHealthSanityLuck(viewModel)),
+          // Draft-only creation panel for this tab (bordered)
+          CreationRow.attributes(),
+
+          _buildSection(
+            "Health, Sanity, Magic Points",
+            _buildHealthSanityLuck(viewModel,
+                draft: character.sheetStatus.isDraft),
+          ),
           const SizedBox(height: 16),
           _buildSection("Attributes", _buildAttributesGrid(viewModel, columns)),
           const SizedBox(height: 16),
-          _buildSection("Status Effects", _buildStatusEffects(viewModel, columns)),
+          _buildSection(
+              "Status Effects", _buildStatusEffects(viewModel, columns)),
         ],
       ),
     );
@@ -69,64 +80,104 @@ class _AttributesTabState extends State<AttributesTab> {
     );
   }
 
-  Widget _buildHealthSanityLuck(CharacterViewModel viewModel) {
-    final character = viewModel.character!;
+  Widget _buildHealthSanityLuck(CharacterViewModel viewModel,
+      {bool draft = false}) {
+    final c = viewModel.character!;
+    int _p(String v, int fb) => int.tryParse(v) ?? fb;
+
     return Wrap(
       spacing: 16.0,
       runSpacing: 8.0,
       children: [
         _buildStatBox(
-            "Health",
-            character.currentHP,
-            character.maxHP,
-            (val) => viewModel.updateHealth(int.tryParse(val) ?? character.currentHP, character.maxHP)),
+          "Health",
+          c.currentHP,
+          c.maxHP,
+          (val) => viewModel.updateHealth(_p(val, c.currentHP), c.maxHP),
+          locked: draft,
+        ),
         _buildStatBox(
-            "Sanity",
-            character.currentSanity,
-            character.startingSanity,
-            (val) => viewModel.updateSanity(int.tryParse(val) ?? character.currentSanity, character.startingSanity)),
+          "Sanity",
+          c.currentSanity,
+          c.startingSanity,
+          (val) => viewModel.updateSanity(
+              _p(val, c.currentSanity), c.startingSanity),
+          locked: draft,
+        ),
         _buildStatBox(
-            "Magic",
-            character.currentMP,
-            character.startingMP,
-            (val) => viewModel.updateMagicPoints(int.tryParse(val) ?? character.currentMP, character.startingMP)),
+          "Magic",
+          c.currentMP,
+          c.startingMP,
+          (val) =>
+              viewModel.updateMagicPoints(_p(val, c.currentMP), c.startingMP),
+          locked: draft,
+        ),
+        // Luck stays editable
         _buildStatBox(
-            "Luck",
-            character.currentLuck,
-            99,
-            (val) => viewModel.updateLuck(int.tryParse(val) ?? character.currentLuck)),
+          "Luck",
+          c.currentLuck,
+          99,
+          (val) => viewModel.updateLuck(_p(val, c.currentLuck)),
+        ),
       ],
     );
   }
 
-  Widget _buildStatBox(String label, int current, int max, Function(String) onChanged) {
-    final controller = TextEditingController(text: current.toString());
+  Widget _buildStatBox(
+  String label,
+  int current,
+  int max,
+  Function(String) onChanged, {
+  bool locked = false,
+  bool showMax = false, // default: hide the "/ max" text
+}) {
+  final controller = TextEditingController(text: current.toString());
 
-    return SizedBox(
-      width: 180,
-      child: Row(
-        children: [
-          SizedBox(
-              width: 70,
-              child: Text(label, textAlign: TextAlign.right)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              keyboardType: TextInputType.number,
-              textAlign: TextAlign.center,
-              decoration: const InputDecoration(border: OutlineInputBorder()),
-              onChanged: (val) => onChanged(val),
-              onTap: () => controller.selection = TextSelection(
-                  baseOffset: 0, extentOffset: controller.text.length),
+  return SizedBox(
+    width: 180,
+    child: Row(
+      children: [
+        SizedBox(
+          width: 70,
+          child: Text(label, textAlign: TextAlign.right),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: TextField(
+            controller: controller,
+            enabled: !locked, // blocks focus & typing when locked
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            decoration: InputDecoration(
+              border: const OutlineInputBorder(),
+              // lock icon inside the field (top-right)
+              suffixIcon: locked
+                  ? const Padding(
+                      padding: EdgeInsets.only(top: 0, right: 6),
+                      child: Tooltip(
+                        message: 'Calculated during creation',
+                        child: Icon(Icons.lock_outline, size: 16),
+                      ),
+                    )
+                  : null,
+              suffixIconConstraints:
+                  const BoxConstraints(minWidth: 0, minHeight: 0),
+            ),
+            onChanged: (val) => onChanged(val),
+            onTap: () => controller.selection = TextSelection(
+              baseOffset: 0,
+              extentOffset: controller.text.length,
             ),
           ),
+        ),
+        if (showMax) ...[
           const SizedBox(width: 8),
           Text("/ $max"),
         ],
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
 
   Widget _buildAttributesGrid(CharacterViewModel viewModel, int columns) {
     final character = viewModel.character!;
@@ -147,10 +198,26 @@ class _AttributesTabState extends State<AttributesTab> {
   Widget _buildStatusEffects(CharacterViewModel viewModel, int columns) {
     final character = viewModel.character!;
     final statusEffects = [
-      {"label": "Major Wound", "value": character.hasMajorWound, "key": "hasMajorWound"},
-      {"label": "Indefinite Madness", "value": character.isIndefinitelyInsane, "key": "isIndefinitelyInsane"},
-      {"label": "Temporary Madness", "value": character.isTemporarilyInsane, "key": "isTemporarilyInsane"},
-      {"label": "Unconscious", "value": character.isUnconscious, "key": "isUnconscious"},
+      {
+        "label": "Major Wound",
+        "value": character.hasMajorWound,
+        "key": "hasMajorWound"
+      },
+      {
+        "label": "Indefinite Madness",
+        "value": character.isIndefinitelyInsane,
+        "key": "isIndefinitelyInsane"
+      },
+      {
+        "label": "Temporary Madness",
+        "value": character.isTemporarilyInsane,
+        "key": "isTemporarilyInsane"
+      },
+      {
+        "label": "Unconscious",
+        "value": character.isUnconscious,
+        "key": "isUnconscious"
+      },
       {"label": "Dying", "value": character.isDying, "key": "isDying"},
     ];
 
@@ -163,7 +230,8 @@ class _AttributesTabState extends State<AttributesTab> {
     );
   }
 
-  Widget _buildStatusCheckbox(Map<String, dynamic> status, CharacterViewModel viewModel) {
+  Widget _buildStatusCheckbox(
+      Map<String, dynamic> status, CharacterViewModel viewModel) {
     return SizedBox(
       width: 200,
       child: Row(
@@ -200,14 +268,16 @@ class _AttributesTabState extends State<AttributesTab> {
   }
 
   Widget _buildAttributeRow(Attribute attribute, CharacterViewModel viewModel) {
-    _controllers.putIfAbsent(attribute.name, () => TextEditingController(text: attribute.base.toString()));
+    _controllers.putIfAbsent(attribute.name,
+        () => TextEditingController(text: attribute.base.toString()));
     return StatRow(
       name: attribute.name,
       base: attribute.base,
       hard: attribute.hard,
       extreme: attribute.extreme,
       controller: _controllers[attribute.name]!,
-      onBaseChanged: (value) => viewModel.updateAttribute(attribute.name, value),
+      onBaseChanged: (value) =>
+          viewModel.updateAttribute(attribute.name, value),
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(

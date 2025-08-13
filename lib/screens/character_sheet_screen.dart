@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../viewmodels/character_viewmodel.dart';
-import '../screens/info_tab.dart';
-import '../screens/attributes_tab.dart';
-import '../screens/skills_tab.dart';
-import '../screens/background_tab.dart';
+import 'package:coc_sheet/viewmodels/character_viewmodel.dart';
+import 'package:coc_sheet/screens/info_tab.dart';
+import 'package:coc_sheet/screens/attributes_tab.dart';
+import 'package:coc_sheet/screens/skills_tab.dart';
+import 'package:coc_sheet/screens/background_tab.dart';
+import 'package:coc_sheet/models/sheet_status.dart';
 
 class CharacterSheetScreen extends StatefulWidget {
   const CharacterSheetScreen({super.key});
@@ -59,16 +60,38 @@ class CharacterSheetScreenState extends State<CharacterSheetScreen> {
       length: 4,
       child: Scaffold(
         appBar: AppBar(
-          // Editable sheet name in AppBar
+          // Subtle background change for drafts
+          backgroundColor: (viewModel.character?.sheetStatus.isDraft ?? false)
+              ? Theme.of(context).colorScheme.surfaceContainerHighest
+              : null,
+
+          centerTitle: false,
+          titleSpacing: 16,
+          // Editable sheet name in AppBar with "(draft)" suffix when in creation mode
           title: SizedBox(
             height: 36,
             child: TextField(
               controller: _sheetNameController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 border: InputBorder.none,
                 hintText: "Sheet Name",
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(vertical: 8),
+                contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                // ➜ italic "(draft)" when draft
+                suffix: (viewModel.character?.sheetStatus.isDraft ?? false)
+                    ? Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: Text(
+                          '(draft)',
+                          style: (Theme.of(context).textTheme.titleMedium ??
+                                  Theme.of(context).textTheme.titleLarge)
+                              ?.copyWith(
+                            fontStyle: FontStyle.italic,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      )
+                    : null,
               ),
               style: Theme.of(context).appBarTheme.titleTextStyle ??
                   Theme.of(context).textTheme.titleLarge,
@@ -76,6 +99,8 @@ class CharacterSheetScreenState extends State<CharacterSheetScreen> {
               onChanged: (val) => viewModel.updateCharacterSheetName(val),
             ),
           ),
+          // no actions needed
+          actions: const [],
           bottom: const TabBar(
             tabs: [
               Tab(text: "Info"),

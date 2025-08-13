@@ -8,6 +8,8 @@ class StatRow extends StatelessWidget {
   final VoidCallback onTap;
   final TextEditingController controller;
   final ValueChanged<int> onBaseChanged;
+  final bool enabled;
+  final bool locked;
 
   const StatRow({
     super.key,
@@ -18,10 +20,14 @@ class StatRow extends StatelessWidget {
     required this.controller,
     required this.onBaseChanged,
     required this.onTap,
+    this.enabled = true,
+    this.locked = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final bool isEditable = enabled && !locked;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -37,28 +43,52 @@ class StatRow extends StatelessWidget {
               width: 130,
               child: Text(
                 name,
-                maxLines: 2, // Allows up to 2 lines (or more if you want)
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 softWrap: true,
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
             ),
             const SizedBox(width: 8),
+
+            // Base value field (fixed 60px), with lock inside top-right when locked
             SizedBox(
               width: 60,
-              child: TextField(
-                controller: controller,
-                keyboardType: TextInputType.number,
-                textAlign: TextAlign.center,
-                decoration: const InputDecoration(border: InputBorder.none),
-                onChanged: (value) {
-                  int? newValue = int.tryParse(value);
-                  if (newValue != null && newValue >= 0) {
-                    onBaseChanged(newValue);
-                  }
-                },
+              child: Stack(
+                children: [
+                  TextField(
+                    controller: controller,
+                    enabled: isEditable, // ← built-in: no focus/input if false
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    decoration: const InputDecoration(border: InputBorder.none),
+                    onChanged: (value) {
+                      if (!isEditable) return;
+                      final newValue = int.tryParse(value);
+                      if (newValue != null && newValue >= 0) {
+                        onBaseChanged(newValue);
+                      }
+                    },
+                    onTap: () {
+                      if (!isEditable) return;
+                      final text = controller.text;
+                      controller.selection = TextSelection(
+                          baseOffset: 0, extentOffset: text.length);
+                    },
+                  ),
+                  if (locked)
+                    const Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Tooltip(
+                        message: 'Calculated during creation',
+                        child: Icon(Icons.lock_outline, size: 14),
+                      ),
+                    ),
+                ],
               ),
             ),
+
             SizedBox(
               width: 60,
               child: Text(
