@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:coc_sheet/models/creation_rule_set.dart';
+import 'package:coc_sheet/models/credit_rating_range.dart';
 
 class ClassicCreationRuleSet extends CreationRuleSet with SkillPointPools {
   ClassicCreationRuleSet({bool Function(String skillName)? isOccupationSkill})
@@ -8,6 +9,18 @@ class ClassicCreationRuleSet extends CreationRuleSet with SkillPointPools {
   @override String get id => 'classic';
   @override String get label => 'Classic (Rolled)';
 
+  @override bool isOccupationSkill(String name) => _isOccupation(name);
+
+  @override
+  CreditRatingRange? get creditRatingRange {
+    // TODO: Return the actual range for the current character.occupation
+    // once the occupation data source is wired. Example:
+    // final occ = character.occupation.trim().toLowerCase();
+    // final r = _creditRangesByOccupation[occ];
+    // return r != null ? CreditRatingRange(min: r.min, max: r.max) : null;
+    return null;
+  }
+
   // Attribute families
   static const _threeD6 = <String>{'Strength','Constitution','Dexterity','Appearance','Power'};
   static const _twoD6p6 = <String>{'Size','Intelligence','Education'};
@@ -15,7 +28,6 @@ class ClassicCreationRuleSet extends CreationRuleSet with SkillPointPools {
   static const _min2d6p6x5 = 40, _max2d6p6x5 = 90;
 
   final bool Function(String skillName)? _isOcc;
-
 
   bool _isOccupation(String skill) => _isOcc?.call(skill) ?? false;
 

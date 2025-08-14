@@ -3,6 +3,7 @@ import 'package:coc_sheet/models/character.dart';
 import 'package:coc_sheet/models/attribute.dart';
 import 'package:coc_sheet/models/skill.dart';
 import 'package:coc_sheet/models/sheet_status.dart';
+import 'package:coc_sheet/models/credit_rating_range.dart';
 import 'package:coc_sheet/models/classic_creation_rule_set.dart';
 
 enum ChangeTarget { attribute, skill }
@@ -94,6 +95,9 @@ abstract class CreationRuleSet {
   int? get occupationPointsRemaining => null;
   int? get personalPointsRemaining => null;
   bool get canFinalize => true;
+  CreditRatingRange? get creditRatingRange => null;
+  
+  bool isOccupationSkill(String name) => false;
 
   void bind(Character c) => character = c;
   void onEnter() {}

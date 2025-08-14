@@ -10,6 +10,7 @@ class StatRow extends StatelessWidget {
   final ValueChanged<int> onBaseChanged;
   final bool enabled;
   final bool locked;
+  final bool occupation;
 
   const StatRow({
     super.key,
@@ -22,6 +23,7 @@ class StatRow extends StatelessWidget {
     required this.onTap,
     this.enabled = true,
     this.locked = false,
+    this.occupation = false,
   });
 
   @override
@@ -39,26 +41,64 @@ class StatRow extends StatelessWidget {
         child: Row(
           children: [
             const SizedBox(width: 8),
+
+            // Name cell (fixed 130). We stack the "Occ" pill without changing width.
             SizedBox(
               width: 130,
-              child: Text(
-                name,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                softWrap: true,
-                style: Theme.of(context).textTheme.bodyLarge,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // add a tiny top padding when the badge is present so it won't cover the text
+                  Padding(
+                    padding: EdgeInsets.only(top: occupation ? 12 : 0),
+                    child: Text(
+                      name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: true,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ),
+                  if (occupation)
+                    Positioned(
+                      left: 0,
+                      top: -2,
+                      child: Tooltip(
+                        message: 'Occupation skill',
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color:
+                                Theme.of(context).colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'Occ',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimaryContainer,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
+
             const SizedBox(width: 8),
 
-            // Base value field (fixed 60px), with lock inside top-right when locked
+            // Base value field (fixed 60), with lock inside top-right when locked
             SizedBox(
               width: 60,
               child: Stack(
                 children: [
                   TextField(
                     controller: controller,
-                    enabled: isEditable, // ← built-in: no focus/input if false
+                    enabled: isEditable, // no focus/input if false
                     keyboardType: TextInputType.number,
                     textAlign: TextAlign.center,
                     decoration: const InputDecoration(border: InputBorder.none),

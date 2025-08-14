@@ -5,6 +5,7 @@ import 'package:coc_sheet/models/character.dart';
 import 'package:coc_sheet/models/sheet_status.dart';
 import 'package:coc_sheet/models/creation_rule_set.dart';
 import 'package:coc_sheet/models/creation_update_event.dart';
+import 'package:coc_sheet/models/credit_rating_range.dart';
 import 'package:coc_sheet/services/character_storage.dart';
 import 'package:coc_sheet/services/sheet_id_generator.dart';
 
@@ -31,6 +32,7 @@ class CharacterViewModel extends ChangeNotifier {
   int? get occupationPointsRemaining => _rules?.occupationPointsRemaining;
   int? get personalPointsRemaining => _rules?.personalPointsRemaining;
   bool get canFinalizeCreation => _rules?.canFinalize ?? true;
+  CreditRatingRange? get creditRatingRange => _rules?.creditRatingRange;
 
   Future<void> init() async {
     final recent = await _storage.getRecent();
@@ -103,6 +105,10 @@ class CharacterViewModel extends ChangeNotifier {
   Future<void> deleteById(String sheetId) async {
     await _storage.delete(sheetId);
     if (_character?.sheetId == sheetId) clearCharacter();
+  }
+
+  bool isOccupationSkill(String name) {
+    return _rules?.isOccupationSkill(name) ?? false;
   }
 
   @override

@@ -20,6 +20,7 @@ class SkillsTab extends StatefulWidget {
 
 class _SkillsTabState extends State<SkillsTab> {
   final Map<String, TextEditingController> _controllers = {};
+
   // Positioning relative to the whole StatRow (unchanged layout).
   // Keep the same right anchor…
   static const double _bubbleRightInset = 120; // px from row right edge
@@ -27,6 +28,10 @@ class _SkillsTabState extends State<SkillsTab> {
   // Lift the bubble *above* the TextField height by ~8px
   static const double _textFieldHeight = 36; // match your field height
   static const double _bubbleTopInset = -(_textFieldHeight + 8);
+
+  // Name cell in StatRow: left padding = 8, name width = 130, icon size = 16
+  static const double _crIconLeftInset = 122; // 8 + 130 - 16
+  static const double _crIconTopInset  = -2;  // slightly above the text baseline
 
   @override
   void dispose() {
@@ -116,98 +121,113 @@ class _SkillsTabState extends State<SkillsTab> {
   }
 
   Widget _buildSkillRow(
-  Skill skill,
-  CharacterViewModel viewModel, {
-  required bool draft,
-}) {
-  // Ensure controller exists and reflects current model value
-  _controllers.putIfAbsent(
-    skill.name,
-    () => TextEditingController(text: skill.base.toString()),
-  );
-  final ctl = _controllers[skill.name]!;
-  final textShouldBe = skill.base.toString();
-  if (ctl.text != textShouldBe) {
-    ctl.text = textShouldBe;
-    ctl.selection = TextSelection.fromPosition(
-      TextPosition(offset: ctl.text.length),
+    Skill skill,
+    CharacterViewModel viewModel, {
+    required bool draft,
+  }) {
+    // Ensure controller exists and reflects current model value
+    _controllers.putIfAbsent(
+      skill.name,
+      () => TextEditingController(text: skill.base.toString()),
     );
-  }
+    final ctl = _controllers[skill.name]!;
+    final textShouldBe = skill.base.toString();
+    if (ctl.text != textShouldBe) {
+      ctl.text = textShouldBe;
+      ctl.selection = TextSelection.fromPosition(
+        TextPosition(offset: ctl.text.length),
+      );
+    }
 
-  final isCalculated =
-      isCalculatedDuringDraft(draft: draft, skillName: skill.name);
+    final isCalculated =
+        isCalculatedDuringDraft(draft: draft, skillName: skill.name);
 
-  // Inline feedback: show only when the last creation update targets this skill
-  final evt = viewModel.lastCreationUpdate.value;
-  final bool showFeedback = evt != null &&
-    evt.target == ChangeTarget.skill &&
-    evt.name == skill.name &&
-    (!evt.applied || evt.codes.isNotEmpty);
+    // Occupation badge
+    final bool isOcc = viewModel.isOccupationSkill(skill.name);
 
-  // Determine message & severity
-  final String feedbackText = showFeedback
-      ? (evt.friendlyMessages.isNotEmpty
-          ? evt.friendlyMessages.first
-          : (!evt.applied ? 'Change rejected.' : 'Applied with limits.'))
-      : '';
-  final bool isError = showFeedback && !evt.applied;
-  final bool isWarn = showFeedback && evt.applied && evt.codes.isNotEmpty;
+    // Inline feedback (error/partial) anchored to this row
+    final evt = viewModel.lastCreationUpdate.value;
+    final bool showFeedback = evt != null &&
+        evt.target == ChangeTarget.skill &&
+        evt.name == skill.name &&
+        (!evt.applied || evt.codes.isNotEmpty);
 
-  // Auto-dismiss after a short delay if the same event is still current
-  if (showFeedback) {
-    final currentEvt = evt;
-    Timer(const Duration(seconds: 3), () {
-      if (viewModel.lastCreationUpdate.value == currentEvt) {
-        viewModel.lastCreationUpdate.value = null;
-      }
-    });
-  }
+    final String feedbackText = showFeedback
+        ? (evt!.friendlyMessages.isNotEmpty
+            ? evt.friendlyMessages.first
+            : (!evt.applied ? 'Change rejected.' : 'Applied with limits.'))
+        : '';
+    final bool isError = showFeedback && !evt!.applied;
+    final bool isWarn = showFeedback && evt!.applied && evt.codes.isNotEmpty;
 
-  // Keep the layout identical: StatRow as base, overlay extras with Stack+Positioned.
-  return Stack(
-    clipBehavior: Clip.none,
-    children: [
-      StatRow(
-        name: skill.name,
-        base: skill.base,
-        hard: skill.hard,
-        extreme: skill.extreme,
-        controller: ctl,
-        enabled: !isCalculated, // built-in: disables focus/input
-        locked: isCalculated,   // shows lock icon in the TextField
-        onBaseChanged: (value) => viewModel.updateSkill(skill.name, value),
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => DiceRollerScreen(
-                skillName: skill.name,
-                base: skill.base,
-                hard: skill.base ~/ 2,
-                extreme: skill.base ~/ 5,
+    if (showFeedback) {
+      final currentEvt = evt;
+      Timer(const Duration(seconds: 3), () {
+        if (viewModel.lastCreationUpdate.value == currentEvt) {
+          viewModel.lastCreationUpdate.value = null;
+        }
+      });
+    }
+
+    // Credit Rating tooltip (range), shown inline in the name cell
+    final bool isCredit = skill.name.toLowerCase() == 'credit rating';
+    final range = viewModel.creditRatingRange; // may be null
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        StatRow(
+          name: skill.name,
+          base: skill.base,
+          hard: skill.hard,
+          extreme: skill.extreme,
+          controller: ctl,
+          enabled: !isCalculated,
+          locked: isCalculated,
+          occupation: isOcc,
+          onBaseChanged: (value) => viewModel.updateSkill(skill.name, value),
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => DiceRollerScreen(
+                  skillName: skill.name,
+                  base: skill.base,
+                  hard: skill.base ~/ 2,
+                  extreme: skill.base ~/ 5,
+                ),
+              ),
+            );
+          },
+        ),
+
+        // Per-row inline feedback bubble
+        if (showFeedback)
+          Positioned(
+            right: _bubbleRightInset,
+            top: _bubbleTopInset,
+            child: IgnorePointer(
+              ignoring: true,
+              child: InlineCreationFeedback(
+                message: feedbackText,
+                isError: isError,
+                isWarning: isWarn,
               ),
             ),
-          );
-        },
-      ),
+          ),
 
-      // Inline bubble anchored near the TextField (no layout changes)
-      if (showFeedback)
-        Positioned(
-          right: _bubbleRightInset,
-          top: _bubbleTopInset,
-          child: IgnorePointer(
-            ignoring: true, // don’t steal taps
-            child: InlineCreationFeedback(
-              message: feedbackText,
-              isError: isError,
-              isWarning: isWarn,
+        // Credit Rating range tooltip (inside the 130px name cell, top-right)
+        if (isCredit && range != null)
+          Positioned(
+            left: _crIconLeftInset,
+            top: _crIconTopInset,
+            child: Tooltip(
+              message: 'Required range: ${range.min}–${range.max}',
+              child: const Icon(Icons.info_outline, size: 16),
             ),
           ),
-        ),
-    ],
-  );
-}
-
+      ],
+    );
+  }
 }
 
 // Helper: which skills are calculated during creation (locked by rules)
