@@ -66,11 +66,11 @@ class _DiceRollerScreenState extends State<DiceRollerScreen> {
 
     String? eval;
     if (_showThresholds()) {
-      if (total <= widget!.extreme!) {
+      if (total <= widget.extreme!) {
         eval = "Extreme Success";
-      } else if (total <= widget!.hard!) {
+      } else if (total <= widget.hard!) {
         eval = "Hard Success";
-      } else if (total <= widget!.base!) {
+      } else if (total <= widget.base!) {
         eval = "Regular Success";
       } else {
         eval = "Failure";

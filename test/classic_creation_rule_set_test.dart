@@ -8,7 +8,7 @@ import 'package:coc_sheet/models/skill.dart';
 import 'package:coc_sheet/models/classic_creation_rule_set.dart'; // adjust import path if different
 
 void main() {
-  Character _emptyCharacter() => Character(
+  Character emptyCharacter() => Character(
         sheetId: 't1',
         sheetStatus: SheetStatus.draft_classic,
         sheetName: 'Test',
@@ -29,17 +29,17 @@ void main() {
         skills: <Skill>[],
       );
 
-  int _attr(Character c, String name) =>
+  int attr(Character c, String name) =>
       c.attributes.firstWhere((a) => a.name == name).base;
 
-  int _skill(Character c, String name) =>
+  int skill(Character c, String name) =>
       c.skills.firstWhere((s) => s.name == name).base;
 
   late ClassicCreationRuleSet rules;
   late Character character;
 
   setUp(() {
-    character = _emptyCharacter();
+    character = emptyCharacter();
     rules = ClassicCreationRuleSet();
     rules.bind(character);
     rules.onEnter();
@@ -65,19 +65,19 @@ void main() {
 
     // Ranges: 3d6×5 → 15..90 ; (2d6+6)×5 → 40..90
     for (final n in ['Strength', 'Constitution', 'Dexterity', 'Appearance', 'Power']) {
-      final v = _attr(character, n);
+      final v = attr(character, n);
       expect(v, inInclusiveRange(15, 90), reason: '$n out of 3d6x5 range');
     }
     for (final n in ['Size', 'Intelligence', 'Education']) {
-      final v = _attr(character, n);
+      final v = attr(character, n);
       expect(v, inInclusiveRange(40, 90), reason: '$n out of 2d6+6 x5 range');
     }
   });
 
   test('initialize computes derived stats from rolled attributes', () {
-    final con = _attr(character, 'Constitution');
-    final siz = _attr(character, 'Size');
-    final pow = _attr(character, 'Power');
+    final con = attr(character, 'Constitution');
+    final siz = attr(character, 'Size');
+    final pow = attr(character, 'Power');
 
     final expectedHP = ((con + siz) / 10).floor();
     final expectedMP = (pow / 5).floor();
@@ -93,20 +93,20 @@ void main() {
 
   test('classic skills are seeded with correct base values', () {
     // A few fixed-base checks
-    expect(_skill(character, 'First Aid'), 30);
-    expect(_skill(character, 'Spot Hidden'), 25);
-    expect(_skill(character, 'Stealth'), 20);
-    expect(_skill(character, 'Occult'), 5);
-    expect(_skill(character, 'Credit Rating'), 0);
-    expect(_skill(character, 'Cthulhu Mythos'), 0);
-    expect(_skill(character, 'Science (Any)'), 1);
-    expect(_skill(character, 'Pilot (Any)'), 1);
+    expect(skill(character, 'First Aid'), 30);
+    expect(skill(character, 'Spot Hidden'), 25);
+    expect(skill(character, 'Stealth'), 20);
+    expect(skill(character, 'Occult'), 5);
+    expect(skill(character, 'Credit Rating'), 0);
+    expect(skill(character, 'Cthulhu Mythos'), 0);
+    expect(skill(character, 'Science (Any)'), 1);
+    expect(skill(character, 'Pilot (Any)'), 1);
 
     // Dynamic bases
-    final dex = _attr(character, 'Dexterity');
-    final edu = _attr(character, 'Education');
-    expect(_skill(character, 'Dodge'), (dex / 2).floor());
-    expect(_skill(character, 'Language (Own)'), edu);
+    final dex = attr(character, 'Dexterity');
+    final edu = attr(character, 'Education');
+    expect(skill(character, 'Dodge'), (dex / 2).floor());
+    expect(skill(character, 'Language (Own)'), edu);
   });
 
   test('Cthulhu Mythos cannot be increased via update()', () {
@@ -114,7 +114,7 @@ void main() {
     expect(res.applied, isFalse);
     expect(res.messages, contains('forbidden_cthulhu_mythos'));
     // Base value remains 0
-    expect(_skill(character, 'Cthulhu Mythos'), 0);
+    expect(skill(character, 'Cthulhu Mythos'), 0);
   });
 
   test('attribute clamping is enforced via update()', () {
@@ -130,8 +130,8 @@ void main() {
   });
 
   test('skill point pools are initialized from EDU and INT', () {
-    final edu = _attr(character, 'Education');
-    final intel = _attr(character, 'Intelligence');
+    final edu = attr(character, 'Education');
+    final intel = attr(character, 'Intelligence');
 
     // Assuming classic 7e: Occupation = EDU*4, Personal = INT*2
     final expectedOcc = edu * 4;

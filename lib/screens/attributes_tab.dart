@@ -83,7 +83,7 @@ class _AttributesTabState extends State<AttributesTab> {
   Widget _buildHealthSanityLuck(CharacterViewModel viewModel,
       {bool draft = false}) {
     final c = viewModel.character!;
-    int _p(String v, int fb) => int.tryParse(v) ?? fb;
+    int p(String v, int fb) => int.tryParse(v) ?? fb;
 
     return Wrap(
       spacing: 16.0,
@@ -93,7 +93,7 @@ class _AttributesTabState extends State<AttributesTab> {
           "Health",
           c.currentHP,
           c.maxHP,
-          (val) => viewModel.updateHealth(_p(val, c.currentHP), c.maxHP),
+          (val) => viewModel.updateHealth(p(val, c.currentHP), c.maxHP),
           locked: draft,
         ),
         _buildStatBox(
@@ -101,7 +101,7 @@ class _AttributesTabState extends State<AttributesTab> {
           c.currentSanity,
           c.startingSanity,
           (val) => viewModel.updateSanity(
-              _p(val, c.currentSanity), c.startingSanity),
+              p(val, c.currentSanity), c.startingSanity),
           locked: draft,
         ),
         _buildStatBox(
@@ -109,7 +109,7 @@ class _AttributesTabState extends State<AttributesTab> {
           c.currentMP,
           c.startingMP,
           (val) =>
-              viewModel.updateMagicPoints(_p(val, c.currentMP), c.startingMP),
+              viewModel.updateMagicPoints(p(val, c.currentMP), c.startingMP),
           locked: draft,
         ),
         // Luck stays editable
@@ -117,7 +117,7 @@ class _AttributesTabState extends State<AttributesTab> {
           "Luck",
           c.currentLuck,
           99,
-          (val) => viewModel.updateLuck(_p(val, c.currentLuck)),
+          (val) => viewModel.updateLuck(p(val, c.currentLuck)),
         ),
       ],
     );

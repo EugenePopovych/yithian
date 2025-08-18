@@ -153,12 +153,12 @@ class _SkillsTabState extends State<SkillsTab> {
         (!evt.applied || evt.codes.isNotEmpty);
 
     final String feedbackText = showFeedback
-        ? (evt!.friendlyMessages.isNotEmpty
+        ? (evt.friendlyMessages.isNotEmpty
             ? evt.friendlyMessages.first
             : (!evt.applied ? 'Change rejected.' : 'Applied with limits.'))
         : '';
-    final bool isError = showFeedback && !evt!.applied;
-    final bool isWarn = showFeedback && evt!.applied && evt.codes.isNotEmpty;
+    final bool isError = showFeedback && !evt.applied;
+    final bool isWarn = showFeedback && evt.applied && evt.codes.isNotEmpty;
 
     if (showFeedback) {
       final currentEvt = evt;
