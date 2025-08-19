@@ -31,7 +31,7 @@ class _SkillsTabState extends State<SkillsTab> {
 
   // Name cell in StatRow: left padding = 8, name width = 130, icon size = 16
   static const double _crIconLeftInset = 122; // 8 + 130 - 16
-  static const double _crIconTopInset  = -2;  // slightly above the text baseline
+  static const double _crIconTopInset  = 12;  // slightly above the text baseline
 
   @override
   void dispose() {

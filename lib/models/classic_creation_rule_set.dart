@@ -9,17 +9,19 @@ class ClassicCreationRuleSet extends CreationRuleSet with SkillPointPools {
   @override String get id => 'classic';
   @override String get label => 'Classic (Rolled)';
 
-  @override bool isOccupationSkill(String name) => _isOccupation(name);
+  Set<String>? _chosenOcc;
+  CreditRatingRange? _crRange;
 
   @override
-  CreditRatingRange? get creditRatingRange {
-    // TODO: Return the actual range for the current character.occupation
-    // once the occupation data source is wired. Example:
-    // final occ = character.occupation.trim().toLowerCase();
-    // final r = _creditRangesByOccupation[occ];
-    // return r != null ? CreditRatingRange(min: r.min, max: r.max) : null;
-    return null;
+  void seedOccupationSkills(Set<String> skills) {
+    _chosenOcc = skills.map((s) => s.toLowerCase()).toSet();
   }
+
+  @override
+  bool isOccupationSkill(String name) => _isOccupation(name);
+
+  @override
+  CreditRatingRange? get creditRatingRange => _crRange;
 
   // Attribute families
   static const _threeD6 = <String>{'Strength','Constitution','Dexterity','Appearance','Power'};
@@ -29,7 +31,12 @@ class ClassicCreationRuleSet extends CreationRuleSet with SkillPointPools {
 
   final bool Function(String skillName)? _isOcc;
 
-  bool _isOccupation(String skill) => _isOcc?.call(skill) ?? false;
+  bool _isOccupation(String skill) {
+    final l = skill.toLowerCase();
+    if (l == 'credit rating') return true; 
+    if (_chosenOcc != null && _chosenOcc!.contains(l)) return true;
+    return _isOcc?.call(skill) ?? false;
+  }
 
   int _clampAttr(String name, int v) {
     if (_threeD6.contains(name)) return v.clamp(_min3d6x5, _max3d6x5);
@@ -144,7 +151,7 @@ class ClassicCreationRuleSet extends CreationRuleSet with SkillPointPools {
     for (final s in character.skills) {
       final delta = s.base - baseFor(s.name);
       if (delta > 0) {
-        final isOcc = _isOccupation(s.name); // your existing helper
+        final isOcc = _isOccupation(s.name);
         // Spend against the appropriate pool to rebuild remaining values.
         spendSkill(isOcc, delta);
       }
@@ -223,7 +230,7 @@ class ClassicCreationRuleSet extends CreationRuleSet with SkillPointPools {
       character.updateAttribute(n, r2d6p6x5());
     }
 
-      // Luck (CoC 7e): 3d6×5
+    // Luck (CoC 7e): 3d6×5
     character.updateLuck(r3d6x5());
 
     // Derived stats depend on attributes
@@ -231,6 +238,11 @@ class ClassicCreationRuleSet extends CreationRuleSet with SkillPointPools {
 
     // Recompute skill point pools from EDU/INT
     setSkillPoolTotals(edu: attr('Education'), intel: attr('Intelligence'));
+  }
+
+  @override
+  void seedCreditRatingRange(CreditRatingRange range) {
+    _crRange = range;
   }
 
   @override

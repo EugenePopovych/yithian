@@ -118,8 +118,8 @@ class StatRow extends StatelessWidget {
                   ),
                   if (locked)
                     const Positioned(
-                      right: 0,
-                      top: 0,
+                      right: 4,
+                      top: 4,
                       child: Tooltip(
                         message: 'Calculated during creation',
                         child: Icon(Icons.lock_outline, size: 14),

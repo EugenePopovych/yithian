@@ -1,27 +1,52 @@
-// lib/screens/character_list_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:coc_sheet/models/character.dart';
 import 'package:coc_sheet/models/sheet_status.dart';
+import 'package:coc_sheet/models/create_character_spec.dart';
 import 'package:coc_sheet/viewmodels/character_viewmodel.dart';
-import 'package:coc_sheet/screens/create_character_dialog.dart';
+import 'package:coc_sheet/services/occupation_storage.dart';
+import 'package:coc_sheet/screens/create_character_screen.dart';
 
 class CharacterListScreen extends StatelessWidget {
   final VoidCallback? onCharacterSelected;
 
   const CharacterListScreen({super.key, this.onCharacterSelected});
 
+  /// Start the new pre-sheet creation flow.
   Future<void> _createNewCharacter(BuildContext context) async {
-    final vm = context.read<CharacterViewModel>();
-    final req = await showCreateCharacterDialog(context);
-    if (req == null) return;
-    await vm.createCharacter(
-      name: req.name,
-      occupation: req.occupation,
-      status: req.status,
+    // Push the CreateCharacterScreen and await the spec.
+    final spec = await Navigator.of(context).push<CreateCharacterSpec>(
+      MaterialPageRoute(
+        builder: (_) => const CreateCharacterScreen(),
+      ),
     );
-    onCharacterSelected?.call();
+
+    // Guard: widget may have been unmounted while awaiting.
+    if (!context.mounted) return;
+    if (spec == null) return;
+
+    // Materialize the draft via CharacterViewModel (next step implements this).
+    try {
+      final occStorage = context.read<OccupationStorage>();
+      await context.read<CharacterViewModel>().createFromSpec(
+            spec,
+            occupationStorage: occStorage,
+          );
+
+      // Guard again after awaiting VM I/O.
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Draft character created')),
+      );
+      onCharacterSelected?.call();
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Character creation not wired yet: $e')),
+      );
+    }
   }
 
   Future<void> _openCharacter(BuildContext context, String id) async {
@@ -32,8 +57,6 @@ class CharacterListScreen extends StatelessWidget {
 
   Future<void> _deleteCharacter(BuildContext context, String id) async {
     final vm = context.read<CharacterViewModel>();
-    // Provide this in the VM:
-    // Future<void> deleteById(String sheetId) { await _storage.delete(sheetId); if (_character?.sheetId == sheetId) clearCharacter(); }
     await vm.deleteById(id);
   }
 

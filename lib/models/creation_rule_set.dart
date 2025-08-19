@@ -60,6 +60,13 @@ mixin SkillPointPools on CreationRuleSet {
   }
 
   @override
+  void seedPools({required int occupation, required int personal}) {
+    // Allow external seeding (e.g., pre-sheet) to set exact totals.
+    _occ.total = occupation;
+    _pers.total = personal;
+  }
+
+  @override
   int? get occupationPointsRemaining => _occ.remaining;
   @override
   int? get personalPointsRemaining => _pers.remaining;
@@ -96,8 +103,16 @@ abstract class CreationRuleSet {
   int? get personalPointsRemaining => null;
   bool get canFinalize => true;
   CreditRatingRange? get creditRatingRange => null;
-  
+
+  /// Whether a skill is treated as an Occupation skill for pool spending.
+  /// Implementations may be seeded from pre-sheet choices.
   bool isOccupationSkill(String name) => false;
+
+  /// Allow seeding chosen occupation skills (from pre-sheet).
+  void seedOccupationSkills(Set<String> skills) {}
+
+  /// Allow seeding initial pool totals (from pre-sheet).
+  void seedPools({required int occupation, required int personal}) {}
 
   void bind(Character c) => character = c;
   void onEnter() {}
@@ -117,6 +132,7 @@ abstract class CreationRuleSet {
 
   void rollAttributes() {}
   void rollSkills() {}
+  void seedCreditRatingRange(CreditRatingRange range) {}
 
   void finalizeDraft() {
     character.sheetStatus = SheetStatus.active;

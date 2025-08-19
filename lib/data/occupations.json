@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "occupations": [
+    {
+      "id": "antiquarian",
+      "name": "Antiquarian",
+      "creditMin": 30,
+      "creditMax": 70,
+      "selectCount": 8,
+      "mandatorySkills": ["Credit Rating"],
+      "skillPool": [
+        "Appraise",
+        "Art/Craft (Any)",
+        "History",
+        "Language (Own)",
+        "Language (Other)",
+        "Library Use",
+        "Listen",
+        "Persuade",
+        "Psychology",
+        "Spot Hidden"
+      ]
+    },
+    {
+      "id": "detective",
+      "name": "Detective (Police or Private)",
+      "creditMin": 20,
+      "creditMax": 50,
+      "selectCount": 8,
+      "mandatorySkills": ["Credit Rating"],
+      "skillPool": [
+        "Art/Craft (Acting)",
+        "Disguise",
+        "Fast Talk",
+        "Firearms (Handgun)",
+        "History",
+        "Intimidate",
+        "Law",
+        "Library Use",
+        "Listen",
+        "Psychology",
+        "Spot Hidden",
+        "Stealth",
+        "Track"
+      ]
+    },
+    {
+      "id": "doctor",
+      "name": "Doctor of Medicine",
+      "creditMin": 30,
+      "creditMax": 80,
+      "selectCount": 8,
+      "mandatorySkills": ["Credit Rating", "First Aid", "Medicine"],
+      "skillPool": [
+        "Biology",
+        "Charm",
+        "History",
+        "Language (Own)",
+        "Language (Other)",
+        "Library Use",
+        "Listen",
+        "Persuade",
+        "Psychology",
+        "Science (Any)"
+      ]
+    },
+    {
+      "id": "journalist",
+      "name": "Journalist",
+      "creditMin": 20,
+      "creditMax": 40,
+      "selectCount": 8,
+      "mandatorySkills": ["Credit Rating"],
+      "skillPool": [
+        "Art/Craft (Any)",
+        "Charm",
+        "Disguise",
+        "Fast Talk",
+        "History",
+        "Language (Own)",
+        "Language (Other)",
+        "Library Use",
+        "Listen",
+        "Photography",
+        "Psychology"
+      ]
+    }
+  ]
+}

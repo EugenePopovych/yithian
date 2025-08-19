@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "occupations": [
+    {
+      "id": "bad",
+      "name": "Bad",
+      "creditMin": "10",
+      "creditMax": 20,
+      "selectCount": 0,
+      "mandatorySkills": [],
+      "skillPool": []
+    }
+  ]
+}

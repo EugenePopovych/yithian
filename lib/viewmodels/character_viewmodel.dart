@@ -2,12 +2,17 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import 'package:coc_sheet/models/character.dart';
+import 'package:coc_sheet/models/attribute.dart';
+import 'package:coc_sheet/models/skill.dart';
 import 'package:coc_sheet/models/sheet_status.dart';
 import 'package:coc_sheet/models/creation_rule_set.dart';
 import 'package:coc_sheet/models/creation_update_event.dart';
 import 'package:coc_sheet/models/credit_rating_range.dart';
+import 'package:coc_sheet/models/create_character_spec.dart';
+import 'package:coc_sheet/models/classic_rules.dart';
 import 'package:coc_sheet/services/character_storage.dart';
 import 'package:coc_sheet/services/sheet_id_generator.dart';
+import 'package:coc_sheet/services/occupation_storage.dart';
 
 class CharacterViewModel extends ChangeNotifier {
   CharacterViewModel(this._storage, {SheetIdGenerator? ids})
@@ -18,6 +23,7 @@ class CharacterViewModel extends ChangeNotifier {
 
   Character? _character;
   CreationRuleSet? _rules;
+  Set<String>? _seededOccupationSkills;
 
   /// Emits the latest creation-time update (accepted/partial/rejected).
   /// UI can listen to this to show inline messages and snap inputs back.
@@ -108,6 +114,12 @@ class CharacterViewModel extends ChangeNotifier {
   }
 
   bool isOccupationSkill(String name) {
+    // If we have a pre-sheet chosen set, prefer it (includes mandatory + user picks).
+    final chosen = _seededOccupationSkills;
+    if (chosen != null) {
+      return chosen.contains(name);
+    }
+    // Otherwise, fall back to the rule set’s notion (usually “allowed by occupation”).
     return _rules?.isOccupationSkill(name) ?? false;
   }
 
@@ -115,6 +127,76 @@ class CharacterViewModel extends ChangeNotifier {
   void dispose() {
     lastCreationUpdate.dispose();
     super.dispose();
+  }
+
+  Future<void> createFromSpec(
+    CreateCharacterSpec spec, {
+    required OccupationStorage occupationStorage,
+  }) async {
+    // 1) Resolve occupation id → model/name
+    final occ = await occupationStorage.findById(spec.occupationId);
+    final occName = occ?.name ?? spec.occupationId;
+
+    // 2) Create the draft shell (defaults to SheetStatus.draft_classic)
+    await createCharacter(
+      name: spec.name,
+      occupation: occName,
+      // status: SheetStatus.draft_classic, // implicit default in createCharacter
+    );
+
+    // 3) Compute Classic values (pure functions)
+    final attrs = Map<String, int>.from(spec.attributes);
+
+    final hp = calcHP(attrs[AttrKey.con]!, attrs[AttrKey.siz]!);
+    final mp = calcMP(attrs[AttrKey.pow]!);
+    final sanity = calcSanity(attrs[AttrKey.pow]!);
+    final move = calcMove(
+      str: attrs[AttrKey.str]!,
+      dex: attrs[AttrKey.dex]!,
+      siz: attrs[AttrKey.siz]!,
+      age: spec.age,
+    );
+    final dbb = calcDamageBonus(attrs[AttrKey.str]!, attrs[AttrKey.siz]!);
+
+    final baseSkills =
+        buildBaseSkills(attrs); // includes Dodge & Language (Own)
+    final occupationPoints = (attrs[AttrKey.edu] ?? 0) * 4;
+    final personalPoints = (attrs[AttrKey.intg] ?? 0) * 2;
+
+    // 4) Apply to the current Character (real assignments & save)
+    await _applyClassicToCurrentCharacter(
+      name: spec.name,
+      age: spec.age,
+      occupationName: occName,
+      attributes: attrs,
+      luck: spec.luck,
+      hp: hp,
+      mp: mp,
+      sanity: sanity,
+      move: move,
+      damageBonus: dbb.db,
+      build: dbb.build,
+      baseSkills: baseSkills,
+      selectedOccupationSkills: spec.selectedSkills,
+      creditMin: occ?.creditMin ?? 0,
+      creditMax: occ?.creditMax ?? 0,
+      occupationPoints: occupationPoints,
+      personalPoints: personalPoints,
+    );
+
+    // Seed for UX badges in the sheet (mandatory + user picks from pre-sheet).
+    _seededOccupationSkills = spec.selectedSkills.toSet();
+    // Tell the rules about the chosen occupation skills and initial pools
+    _rules?.seedOccupationSkills(spec.selectedSkills.toSet());
+    _rules?.seedPools(
+      occupation: (spec.attributes[AttrKey.edu] ?? 0) * 4,
+      personal:   (spec.attributes[AttrKey.intg] ?? 0) * 2,
+    );
+    _rules?.seedCreditRatingRange(
+      CreditRatingRange(min: occ?.creditMin ?? 0, max: occ?.creditMax ?? 0),
+    );
+
+    notifyListeners();
   }
 
   // -------- internal helpers --------
@@ -139,6 +221,7 @@ class CharacterViewModel extends ChangeNotifier {
             sheetName: c.sheetName, name: initName, occupation: initOccupation);
       }
       _rules = rs;
+      _seededOccupationSkills = null;
     }
 
     notifyListeners();
@@ -158,6 +241,7 @@ class CharacterViewModel extends ChangeNotifier {
     _rules?.onExit();
     _rules = null;
     _character = null;
+     _seededOccupationSkills = null;
     notifyListeners();
   }
 
@@ -185,6 +269,7 @@ class CharacterViewModel extends ChangeNotifier {
     } else {
       _character!.sheetStatus = SheetStatus.active;
     }
+     _seededOccupationSkills = null;
     notifyListeners();
     await saveCharacter();
   }
@@ -403,5 +488,97 @@ class CharacterViewModel extends ChangeNotifier {
     _character!.updateLuck(luck);
     notifyListeners();
     saveCharacter();
+  }
+
+  Future<void> _applyClassicToCurrentCharacter({
+    required String name,
+    required int age,
+    required String occupationName,
+    required Map<String, int> attributes,
+    required int luck,
+    required int hp,
+    required int mp,
+    required int sanity,
+    required int move, // computed but not stored in Character (has a getter)
+    required String damageBonus, // not stored in current Character model
+    required int build, // not stored in current Character model
+    required Map<String, int> baseSkills,
+    required List<String>
+        selectedOccupationSkills, // not persisted in Character model
+    required int creditMin, // not persisted in Character model
+    required int creditMax, // not persisted in Character model
+    required int occupationPoints, // not persisted in Character model
+    required int personalPoints, // not persisted in Character model
+  }) async {
+    if (_character == null) return;
+    final c = _character!;
+
+    // ---------- Identity / Demographics ----------
+    c.name = name; // allow override to keep in sync with spec
+    c.occupation = occupationName;
+    c.age = age;
+
+    // ---------- Luck ----------
+    c.updateLuck(luck);
+
+    // ---------- Attributes (replace full list) ----------
+    // Map AttrKey -> Character attribute names used in your model
+    final attrsList = <Attribute>[
+      Attribute(name: 'Strength', base: attributes[AttrKey.str] ?? 0),
+      Attribute(name: 'Constitution', base: attributes[AttrKey.con] ?? 0),
+      Attribute(name: 'Dexterity', base: attributes[AttrKey.dex] ?? 0),
+      Attribute(name: 'Appearance', base: attributes[AttrKey.app] ?? 0),
+      Attribute(name: 'Intelligence', base: attributes[AttrKey.intg] ?? 0),
+      Attribute(name: 'Power', base: attributes[AttrKey.pow] ?? 0),
+      Attribute(name: 'Size', base: attributes[AttrKey.siz] ?? 0),
+      Attribute(name: 'Education', base: attributes[AttrKey.edu] ?? 0),
+    ];
+    c.attributes = attrsList;
+
+    // ---------- HP / MP / Sanity ----------
+    c.maxHP = hp;
+    c.currentHP = hp;
+
+    c.startingMP = mp;
+    c.currentMP = mp;
+
+    // ---------- Skills ----------
+    // Seed base skill values (before any spend). Keep Credit Rating at base = 0.
+    final skillsList = baseSkills.entries
+        .map((e) => Skill(name: e.key, base: e.value))
+        .toList();
+
+    // Ensure Credit Rating is present and at least the occupation minimum.
+    {
+      final idx = skillsList.indexWhere((s) => s.name == 'Credit Rating');
+      if (idx >= 0) {
+        if (skillsList[idx].base < creditMin) {
+          skillsList[idx].base = creditMin; // mutable Skill.base in your model
+        }
+      } else {
+        skillsList.add(Skill(name: 'Credit Rating', base: creditMin));
+      }
+    }
+
+    // Sort for stable UI, then assign.
+    skillsList.sort((a, b) => a.name.compareTo(b.name));
+    c.skills = skillsList;
+
+    c.startingSanity = sanity;
+    // Clamp currentSanity to computed maxSanity (uses Mythos in skills)
+    final maxSan = c.maxSanity;
+    c.currentSanity = (sanity > maxSan) ? maxSan : sanity;
+
+    // ---------- Notes on fields we don't persist on Character ----------
+    // - movementRate is a getter based on stats; we don't store `move`.
+    // - damageBonus/build aren't in Character yet; skip persisting them.
+    // - occupation skill selection, CR bounds, and pools are part of the creation rule set/UI state.
+
+    // ---------- Rebind rules so they see the updated character ----------
+    _setCharacterInternal(
+        c); // rebinds CreationRuleSet if it's a draft; no re-initialize
+
+    // ---------- Persist ----------
+    await saveCharacter();
   }
 }

@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "occupations": [
+    {
+      "id": "antiquarian",
+      "name": "Antiquarian",
+      "creditMin": 30,
+      "creditMax": 70,
+      "selectCount": 4,
+      "mandatorySkills": ["Appraise", "History"],
+      "skillPool": ["Accounting", "Art/Craft", "Library Use", "Spot Hidden", "Charm", "Fast Talk", "Intimidate", "Persuade"]
+    },
+    {
+      "id": "police-detective",
+      "name": "Police Detective",
+      "creditMin": 20,
+      "creditMax": 50,
+      "selectCount": 3,
+      "mandatorySkills": ["Law", "Psychology", "Intimidate"],
+      "skillPool": ["Firearms (Handgun)", "Spot Hidden", "Stealth", "Listen", "Drive Auto", "First Aid"]
+    }
+  ]
+}
