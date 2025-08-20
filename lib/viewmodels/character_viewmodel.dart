@@ -576,11 +576,6 @@ class CharacterViewModel extends ChangeNotifier {
     final maxSan = c.maxSanity;
     c.currentSanity = (sanity > maxSan) ? maxSan : sanity;
 
-    // ---------- Notes on fields we don't persist on Character ----------
-    // - movementRate is a getter based on stats; we don't store `move`.
-    // - damageBonus/build aren't in Character yet; skip persisting them.
-    // - occupation skill selection, CR bounds, and pools are part of the creation rule set/UI state.
-
     // ---------- Rebind rules so they see the updated character ----------
     _setCharacterInternal(
         c); // rebinds CreationRuleSet if it's a draft; no re-initialize
@@ -588,4 +583,37 @@ class CharacterViewModel extends ChangeNotifier {
     // ---------- Persist ----------
     await saveCharacter();
   }
+  // ----- Derived for Attributes tab -----
+
+  /// Movement rate derived from the Character model (getter on Character).
+  int? get movementRate => _character?.movementRate;
+
+  /// Damage Bonus string (e.g., "-1d4", "0", "+1d4", "+1d6") derived from STR & SIZ.
+  String get damageBonusText {
+    if (_character == null) return '—';
+    int str = 0, siz = 0;
+    for (final a in _character!.attributes) {
+      if (a.name == 'Strength') {
+        str = a.base;
+      } else if (a.name == 'Size') {
+        siz = a.base;
+      }
+    }
+    return calcDamageBonus(str, siz).db;
+  }
+
+  /// Build value (integer) derived from STR & SIZ.
+  int? get buildValue {
+    if (_character == null) return null;
+    int str = 0, siz = 0;
+    for (final a in _character!.attributes) {
+      if (a.name == 'Strength') {
+        str = a.base;
+      } else if (a.name == 'Size') { 
+        siz = a.base;
+      }
+    }
+    return calcDamageBonus(str, siz).build;
+  }
+
 }

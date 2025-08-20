@@ -55,6 +55,8 @@ class _AttributesTabState extends State<AttributesTab> {
           const SizedBox(height: 16),
           _buildSection("Attributes", _buildAttributesGrid(viewModel, columns)),
           const SizedBox(height: 16),
+          _buildSection("Derived", _buildDerived(viewModel)),
+          const SizedBox(height: 16),
           _buildSection(
               "Status Effects", _buildStatusEffects(viewModel, columns)),
         ],
@@ -290,6 +292,40 @@ class _AttributesTabState extends State<AttributesTab> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildDerived(CharacterViewModel vm) {
+    Widget pill(String label, String value) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border:
+                Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(label, style: Theme.of(context).textTheme.labelMedium),
+              const SizedBox(width: 8),
+              Text(value, style: Theme.of(context).textTheme.bodyMedium),
+            ],
+          ),
+        );
+
+    final move = vm.movementRate?.toString() ?? '—';
+    final build = vm.buildValue?.toString() ?? '—';
+    final db = vm.damageBonusText; // e.g., "-1d4", "0", "+1d6"
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        pill('Move', move),
+        pill('Build', build),
+        pill('Damage Bonus', db),
+      ],
     );
   }
 }
