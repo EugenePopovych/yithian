@@ -15,18 +15,42 @@ class CharacterListScreen extends StatelessWidget {
 
   /// Start the new pre-sheet creation flow.
   Future<void> _createNewCharacter(BuildContext context) async {
-    // Push the CreateCharacterScreen and await the spec.
+    // 0) If there is an existing draft, confirm discard first
+    final vm = context.read<CharacterViewModel>();
+    final hasDraft = vm.character?.sheetStatus.isDraft ?? false;
+    if (hasDraft) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Discard current draft?'),
+          content: const Text(
+            'You already have a draft character. Creating a new one will discard it.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton.tonal(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Discard'),
+            ),
+          ],
+        ),
+      );
+      if (ok != true) return; // abort creating a new character
+      await vm.discardCurrent();
+      if (!context.mounted) return;
+    }
+
+    // 1) Push the CreateCharacterScreen and await the spec.
     final spec = await Navigator.of(context).push<CreateCharacterSpec>(
-      MaterialPageRoute(
-        builder: (_) => const CreateCharacterScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const CreateCharacterScreen()),
     );
 
-    // Guard: widget may have been unmounted while awaiting.
-    if (!context.mounted) return;
-    if (spec == null) return;
+    if (!context.mounted || spec == null) return;
 
-    // Materialize the draft via CharacterViewModel (next step implements this).
+    // 2) Materialize the draft via CharacterViewModel
     try {
       final occStorage = context.read<OccupationStorage>();
       await context.read<CharacterViewModel>().createFromSpec(
@@ -34,9 +58,7 @@ class CharacterListScreen extends StatelessWidget {
             occupationStorage: occStorage,
           );
 
-      // Guard again after awaiting VM I/O.
       if (!context.mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Draft character created')),
       );
