@@ -68,12 +68,27 @@ class CharacterListScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Your Investigators')),
       body: StreamBuilder<List<Character>>(
         stream: vm.charactersStream(
-          statuses: const {SheetStatus.active, SheetStatus.archived},
+          // listen to all; we filter below so transitions (draft -> active) are caught
+          statuses: SheetStatus.values.toSet(),
         ),
         builder: (context, snap) {
-          final characters = snap.data ?? const <Character>[];
+          // TEMP DEBUG
+          debugPrint(
+              '[LIST] snapshot hasData=${snap.hasData} err=${snap.error}');
+          final all = snap.data ?? const <Character>[];
+          debugPrint('[LIST] received=${all.length}');
+          // END OF TEMP DEBUG
+
+          // final all = snap.data ?? const <Character>[];
+          final characters = all
+              .where((c) =>
+                  c.sheetStatus == SheetStatus.active ||
+                  c.sheetStatus == SheetStatus.archived)
+              .toList();
+
           if (characters.isEmpty) {
-            return const Center(child: Text('No characters yet. Tap + to create one!'));
+            return const Center(
+                child: Text('No characters yet. Tap + to create one!'));
           }
           return ListView.builder(
             itemCount: characters.length,

@@ -182,6 +182,20 @@ class _CreationSkillsRow extends StatelessWidget {
             onPressed: canFinish ? () => vm.finalizeCreation() : null,
             child: const Text('Finish'),
           ),
+          if (vm.rules != null) ...[
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: () {
+                final character = vm.character;
+                if (character == null) return;
+                for (final skill in character.skills) {
+                  vm.updateSkill(skill.name, skill.base + 20);
+                }
+              },
+              child: const Text('Distribute +20 (Test)'),
+            ),
+            const SizedBox(height: 8),
+          ],
           Tooltip(
             message: 'Above base spends points.\n'
                 'Dodge = DEX/2; Language (Own) = EDU.\n'

@@ -44,30 +44,32 @@ class HiveCharacterStorage implements CharacterStorage {
   }) async* {
     final box = await _openCharacters();
 
-    List<Character> snapshot() {
-      final out = <Character>[];
-      for (final key in box.keys) {
-        if (key is! String) continue;
-        final h = box.get(key);
-        if (h == null) continue;
-        final c = h.toCharacter();
-        if (statuses.contains(c.sheetStatus)) out.add(c);
-      }
-      return out;
+    List<Character> buildSnapshot() {
+      final list = box.values
+          .map((h) => h.toCharacter())
+          .where((c) => statuses.contains(c.sheetStatus))
+          .toList();
+      list.sort((a, b) => a.name.compareTo(b.name));
+      return list;
     }
 
-    final controller = StreamController<List<Character>>.broadcast();
-    void emit() => controller.add(snapshot());
+    bool sameEssential(List<Character> a, List<Character> b) {
+      if (a.length != b.length) return false;
+      for (var i = 0; i < a.length; i++) {
+        final x = a[i], y = b[i];
+        if (x.sheetId != y.sheetId) return false;
+        if (x.sheetStatus != y.sheetStatus) return false;
+        if (x.name != y.name)
+          return false; // optional, helps reduce noisy rebuilds
+      }
+      return true;
+    }
 
-    final sub = box.watch().listen((_) => emit());
-    emit();
+    // 1) Emit the current state immediately
+    yield buildSnapshot();
 
-    controller.onCancel = () async {
-      await sub.cancel();
-      await controller.close();
-    };
-
-    yield* controller.stream;
+    // 2) Then emit on every change
+    yield* box.watch().map((_) => buildSnapshot()).distinct(sameEssential);
   }
 
   @override

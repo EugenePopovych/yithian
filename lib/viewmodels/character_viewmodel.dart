@@ -261,17 +261,37 @@ class CharacterViewModel extends ChangeNotifier {
 
   Future<void> finalizeCreation() async {
     if (_character == null) return;
+
+    // If we’re in a draft with rules, finalize the draft first.
     if (_rules != null) {
       if (!(_rules!.canFinalize)) return;
       _rules!.finalizeDraft();
-      _rules!.onExit();
-      _rules = null;
-    } else {
-      _character!.sheetStatus = SheetStatus.active;
     }
-     _seededOccupationSkills = null;
+
+    // Ensure status is ACTIVE regardless of what finalizeDraft() does internally.
+    _character!.sheetStatus = SheetStatus.active;
+
+    // Clean up rule-set binding.
+    _rules?.onExit();
+    _rules = null;
+    _seededOccupationSkills = null;
+
+    await saveCharacter(); // persist the status change so the List can see it
+
+    // TEMP DEBUG — check storage sees it right after save
+    final allNow = await _storage
+        .getCharacters(
+          statuses: SheetStatus.values.toSet(),
+        )
+        .first;
+    debugPrint('[FINALIZE] stored count=${allNow.length}');
+    for (final c in allNow) {
+      debugPrint(
+          '[FINALIZE] id=${c.sheetId} name=${c.name} status=${c.sheetStatus}');
+    }
+    // END OF TEMP DEBUG
+
     notifyListeners();
-    await saveCharacter();
   }
 
   Future<void> discardCurrent() async {
