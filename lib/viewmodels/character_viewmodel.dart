@@ -278,19 +278,6 @@ class CharacterViewModel extends ChangeNotifier {
 
     await saveCharacter(); // persist the status change so the List can see it
 
-    // TEMP DEBUG — check storage sees it right after save
-    final allNow = await _storage
-        .getCharacters(
-          statuses: SheetStatus.values.toSet(),
-        )
-        .first;
-    debugPrint('[FINALIZE] stored count=${allNow.length}');
-    for (final c in allNow) {
-      debugPrint(
-          '[FINALIZE] id=${c.sheetId} name=${c.name} status=${c.sheetStatus}');
-    }
-    // END OF TEMP DEBUG
-
     notifyListeners();
   }
 

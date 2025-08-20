@@ -72,14 +72,7 @@ class CharacterListScreen extends StatelessWidget {
           statuses: SheetStatus.values.toSet(),
         ),
         builder: (context, snap) {
-          // TEMP DEBUG
-          debugPrint(
-              '[LIST] snapshot hasData=${snap.hasData} err=${snap.error}');
           final all = snap.data ?? const <Character>[];
-          debugPrint('[LIST] received=${all.length}');
-          // END OF TEMP DEBUG
-
-          // final all = snap.data ?? const <Character>[];
           final characters = all
               .where((c) =>
                   c.sheetStatus == SheetStatus.active ||

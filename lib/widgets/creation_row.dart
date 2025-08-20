@@ -126,14 +126,17 @@ class _CreationAttributesRow extends StatelessWidget {
       child: Row(
         children: [
           Expanded(child: Text('Creation: $label')),
-          // renamed
+          OutlinedButton(
+            onPressed: () => _confirmDiscardDraft(context),
+            child: const Text('Discard Draft'),
+          ),
+          const SizedBox(width: 8),
           ElevatedButton(
             onPressed: () =>
                 context.read<CharacterViewModel>().rollAttributes(),
-            child: const Text('Reroll Attributes'), // was: 'Roll Attributes'
+            child: const Text('Reroll Attributes'),
           ),
           const SizedBox(width: 8),
-          // new: Finish in Attributes tab
           ElevatedButton(
             onPressed: canFinish
                 ? () => context.read<CharacterViewModel>().finalizeCreation()
@@ -178,6 +181,10 @@ class _CreationSkillsRow extends StatelessWidget {
           Text('Creation: $label'),
           chip('Occupation', occ),
           chip('Personal', per),
+          OutlinedButton(
+            onPressed: () => _confirmDiscardDraft(context),
+            child: const Text('Discard Draft'),
+          ),
           ElevatedButton(
             onPressed: canFinish ? () => vm.finalizeCreation() : null,
             child: const Text('Finish'),
@@ -226,6 +233,11 @@ class _CreationBackgroundRow extends StatelessWidget {
       child: Row(
         children: [
           Expanded(child: Text('Creation: $label')),
+          OutlinedButton(
+            onPressed: () => _confirmDiscardDraft(context),
+            child: const Text('Discard Draft'),
+          ),
+          const SizedBox(width: 8),
           ElevatedButton(
             onPressed: canFinalize
                 ? () => context.read<CharacterViewModel>().finalizeCreation()
