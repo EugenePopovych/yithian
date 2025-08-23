@@ -10,7 +10,7 @@ import 'package:coc_sheet/models/classic_creation_rule_set.dart'; // adjust impo
 void main() {
   Character emptyCharacter() => Character(
         sheetId: 't1',
-        sheetStatus: SheetStatus.draft_classic,
+        sheetStatus: SheetStatus.draftClassic,
         sheetName: 'Test',
         name: '',
         age: 0,

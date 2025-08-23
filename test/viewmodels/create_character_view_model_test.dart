@@ -76,8 +76,8 @@ int _calcMoveFromBase({required int str, required int dex, required int siz, req
   return max(1, min(12, move));
 }
 
-DamageBonus _calcDB(int strPlusSiz) {
-  final totalBase = (strPlusSiz / 5).floor();
+DamageBonus _calcDB(int str, int siz) {
+  final totalBase = str + siz;
   if (totalBase <= 64) return const DamageBonus('-2', -2);
   if (totalBase <= 84) return const DamageBonus('-1', -1);
   if (totalBase <= 124) return const DamageBonus('0', 0);
@@ -113,7 +113,7 @@ void main() {
         siz: expectedAttrs[AttrKey.siz]!,
         age: vm.age, // default 20
       );
-      final db = _calcDB(expectedAttrs[AttrKey.str]! + expectedAttrs[AttrKey.siz]!);
+      final db = _calcDB(expectedAttrs[AttrKey.str]!, expectedAttrs[AttrKey.siz]!);
 
       expect(vm.hp, hp);
       expect(vm.mp, mp);

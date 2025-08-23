@@ -226,10 +226,10 @@ abstract class CreationRuleSet {
 abstract class CreationRules {
   static CreationRuleSet forStatus(SheetStatus status) {
     switch (status) {
-      case SheetStatus.draft_classic:
+      case SheetStatus.draftClassic:
         return ClassicCreationRuleSet();
-      case SheetStatus.draft_points:
-      case SheetStatus.draft_free:
+      case SheetStatus.draftPoints:
+      case SheetStatus.draftFree:
         throw UnimplementedError('Rule set for $status not implemented yet.');
       default:
         throw StateError('forStatus called for non-draft status: $status');

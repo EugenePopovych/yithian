@@ -59,8 +59,9 @@ class HiveCharacterStorage implements CharacterStorage {
         final x = a[i], y = b[i];
         if (x.sheetId != y.sheetId) return false;
         if (x.sheetStatus != y.sheetStatus) return false;
-        if (x.name != y.name)
-          return false; // optional, helps reduce noisy rebuilds
+        if (x.name != y.name) {
+          return false;
+        }
       }
       return true;
     }

@@ -10,6 +10,8 @@ import 'package:coc_sheet/models/creation_update_event.dart';
 import 'package:coc_sheet/models/credit_rating_range.dart';
 import 'package:coc_sheet/models/create_character_spec.dart';
 import 'package:coc_sheet/models/classic_rules.dart';
+import 'package:coc_sheet/models/skill_bases.dart';
+import 'package:coc_sheet/models/skill_specialization.dart';
 import 'package:coc_sheet/services/character_storage.dart';
 import 'package:coc_sheet/services/sheet_id_generator.dart';
 import 'package:coc_sheet/services/occupation_storage.dart';
@@ -75,7 +77,7 @@ class CharacterViewModel extends ChangeNotifier {
     final id = _ids.newId();
     final c = Character(
       sheetId: id,
-      sheetStatus: status ?? SheetStatus.draft_classic,
+      sheetStatus: status ?? SheetStatus.draftClassic,
       sheetName: (name != null && name.isNotEmpty) ? name : 'New Sheet',
       name: name ?? '',
       age: 0,
@@ -113,13 +115,115 @@ class CharacterViewModel extends ChangeNotifier {
     if (_character?.sheetId == sheetId) clearCharacter();
   }
 
-  bool isOccupationSkill(String name) {
-    // If we have a pre-sheet chosen set, prefer it (includes mandatory + user picks).
-    final chosen = _seededOccupationSkills;
-    if (chosen != null) {
-      return chosen.contains(name);
+  // ----- Specialization helpers (Step 3) -----
+
+  /// Add a new specialized skill under a given family (e.g., "Science", "Art/Craft").
+  /// - Ensures the generic family skill exists (locked at its base).
+  /// - Avoids duplicates by display name "Family (Spec)".
+  /// - Inserts and persists the updated skills list.
+  Future<void> addSpecializedSkill({
+    required String category,
+    required String specialization,
+  }) async {
+    if (_character == null) return;
+
+    final c = _character!;
+
+    // 1) Ensure the generic family skill exists (locked at base, no specialization)
+    final genericIndex = c.skills.indexWhere((s) => s.name == category);
+    if (genericIndex < 0) {
+      c.skills.add(Skill(
+        name: category,
+        base: SkillBases.baseForGeneric(category),
+        canUpgrade: false, // locked in creation; UI can also reflect this
+        category: category,
+        specialization: null,
+      ));
     }
-    // Otherwise, fall back to the rule set’s notion (usually “allowed by occupation”).
+
+    // 2) Create the specialized display name and check for duplicates
+    final display = SkillSpecialization.displayName(category, specialization);
+    final exists = c.skills.any((s) => s.name == display);
+    if (exists) {
+      notifyListeners(); // nothing changed, but keep UI responsive
+      return;
+    }
+
+    // 3) Insert the new specialized skill with its base
+    c.skills.add(Skill(
+      name: display, // keep .name as canonical display for compatibility
+      base: SkillBases.baseForSpecialized(category, specialization),
+      canUpgrade: true,
+      category: category,
+      specialization: specialization,
+    ));
+
+    // 4) Sort for stable UI: generic family first, then its specializations A→Z, then others
+    c.skills.sort((a, b) {
+      final aCat = a.category ?? a.name;
+      final bCat = b.category ?? b.name;
+
+      // Group by category/family first
+      final catCmp = aCat.compareTo(bCat);
+      if (catCmp != 0) return catCmp;
+
+      // Place generic (no specialization) before specializations within the same family
+      final aIsGen = a.specialization == null;
+      final bIsGen = b.specialization == null;
+      if (aIsGen != bIsGen) {
+        return aIsGen ? -1 : 1;
+      }
+
+      // Then by display name
+      return a.displayName.compareTo(b.displayName);
+    });
+
+    notifyListeners();
+    await saveCharacter();
+  }
+
+  /// Remove a skill by its display name (e.g., "Science (Biology)").
+  /// Does not remove the generic family skill.
+  Future<void> removeSkillByName(String name) async {
+    if (_character == null) return;
+    final c = _character!;
+
+    // Prevent removing generic family skills by mistake
+    if (SkillSpecialization.isGenericFamily(name)) {
+      notifyListeners();
+      return;
+    }
+
+    c.skills.removeWhere((s) => s.name == name);
+    notifyListeners();
+    await saveCharacter();
+  }
+
+  /// Expanded occupation check:
+  /// - If [name] is a specialization "Family (Spec)", treat it as occupational if
+  ///   either the exact name OR its family is allowed by the rules.
+  /// - Falls back to the rules' own check and previously seeded picks.
+  bool isOccupationSkill(String name) {
+    // Prefer pre-seeded set if present (mandatory + user picks)
+    final chosen = _seededOccupationSkills;
+    if (chosen != null && chosen.contains(name)) {
+      return true;
+    }
+
+    // Parse specialization; if a family is present, check family as a wildcard.
+    final parsed = SkillSpecialization.parse(name);
+    final fam = parsed.category;
+
+    // Rules may know exact names; check both exact and family.
+    final byRulesExact = _rules?.isOccupationSkill(name) ?? false;
+    if (byRulesExact) return true;
+
+    if (fam != null) {
+      final byRulesFamily = _rules?.isOccupationSkill(fam) ?? false;
+      if (byRulesFamily) return true;
+    }
+
+    // Finally, fall back to rules on the given name as before
     return _rules?.isOccupationSkill(name) ?? false;
   }
 

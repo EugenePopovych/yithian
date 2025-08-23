@@ -6,10 +6,14 @@ import 'package:coc_sheet/models/attribute.dart';
 import 'package:coc_sheet/models/character.dart';
 import 'package:coc_sheet/models/sheet_status.dart';
 import 'package:coc_sheet/models/skill.dart';
-
+import 'package:coc_sheet/models/occupation.dart';
+import 'package:coc_sheet/models/skill_bases.dart';
+import 'package:coc_sheet/models/skill_specialization.dart';
+import 'package:coc_sheet/models/classic_rules.dart';
+import 'package:coc_sheet/models/create_character_spec.dart';
 import 'package:coc_sheet/services/character_storage.dart';
 import 'package:coc_sheet/services/sheet_id_generator.dart';
-
+import 'package:coc_sheet/services/occupation_storage.dart';
 import 'package:coc_sheet/viewmodels/character_viewmodel.dart';
 
 /// ---------- Fakes ----------
@@ -19,10 +23,13 @@ class SeqIdGen implements SheetIdGenerator {
   String newId() => 'id-${++_i}';
 }
 
-class FakeStorage implements CharacterStorage {
+class FakeCharacterStorage implements CharacterStorage {
   final _db = <String, Character>{};
   String? _recentId;
   final _bus = StreamController<List<Character>>.broadcast();
+
+  Character? get lastStored =>
+    _recentId != null ? _db[_recentId] : null;
 
   void dispose() => _bus.close();
 
@@ -81,11 +88,33 @@ class FakeStorage implements CharacterStorage {
   }
 }
 
+class FakeOccupationStorage implements OccupationStorage {
+  final Map<String, Occupation> _byId;
+
+  FakeOccupationStorage(Occupation occ) : _byId = {occ.id: occ};
+
+  @override
+  Future<Occupation?> findById(String id) async => _byId[id];
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/// ---------- Utilities -----
+
+int skill(List<Skill> skills, String name) {
+  final found = skills.firstWhere(
+    (sk) => sk.displayName == name || sk.name == name,
+    orElse: () => Skill(name: name, base: 0),
+  );
+  return found.base;
+}
+
 /// ---------- Tests ----------
 void main() {
   group('CharacterViewModel (with rules)', () {
     test('Initial character data should be correct (seeded storage)', () async {
-      final storage = FakeStorage();
+      final storage = FakeCharacterStorage();
       final vm = CharacterViewModel(storage, ids: SeqIdGen());
 
       final seeded = Character(
@@ -119,7 +148,7 @@ void main() {
     });
 
     test('Updating an attribute should notify listeners', () async {
-      final storage = FakeStorage();
+      final storage = FakeCharacterStorage();
       final vm = CharacterViewModel(storage, ids: SeqIdGen());
       await vm.createCharacter(); // draft_classic by default
       // seed attribute
@@ -138,7 +167,7 @@ void main() {
     });
 
     test('Updating a skill should notify listeners', () async {
-      final storage = FakeStorage();
+      final storage = FakeCharacterStorage();
       final vm = CharacterViewModel(storage, ids: SeqIdGen());
       await vm.createCharacter(); // draft_classic
 
@@ -160,20 +189,20 @@ void main() {
     });
 
     test('createCharacter generates id and binds classic rules', () async {
-      final storage = FakeStorage();
+      final storage = FakeCharacterStorage();
       final vm = CharacterViewModel(storage, ids: SeqIdGen());
 
       await vm.createCharacter(name: 'Jane', occupation: 'Detective');
 
       final c = vm.character!;
       expect(c.sheetId, equals('id-1'));
-      expect(c.sheetStatus, SheetStatus.draft_classic);
+      expect(c.sheetStatus, SheetStatus.draftClassic);
       expect(vm.rules, isNotNull);
       expect(vm.rules!.label, contains('Classic'));
     });
 
     test('Classic: attribute clamp to max 90', () async {
-      final storage = FakeStorage();
+      final storage = FakeCharacterStorage();
       final vm = CharacterViewModel(storage, ids: SeqIdGen());
       await vm.createCharacter();
 
@@ -189,7 +218,7 @@ void main() {
     test(
         'Classic: INT drives personal points; spend partially when exceeding pool',
         () async {
-      final storage = FakeStorage();
+      final storage = FakeCharacterStorage();
       final vm = CharacterViewModel(storage, ids: SeqIdGen());
       await vm.createCharacter();
 
@@ -209,7 +238,7 @@ void main() {
     });
 
     test('Classic: Cthulhu Mythos increase is blocked', () async {
-      final storage = FakeStorage();
+      final storage = FakeCharacterStorage();
       final vm = CharacterViewModel(storage, ids: SeqIdGen());
       await vm.createCharacter();
       vm.updateAttribute('Intelligence', 40); // establish pool
@@ -226,7 +255,7 @@ void main() {
 
     test('finalizeCreation respects rules (not allowed while points remain)',
         () async {
-      final storage = FakeStorage();
+      final storage = FakeCharacterStorage();
       final vm = CharacterViewModel(storage, ids: SeqIdGen());
       await vm.createCharacter();
       vm.updateAttribute('Education', 40); // occ = 160
@@ -240,7 +269,7 @@ void main() {
   });
 
   test('init loads recent if available (drafts allowed)', () async {
-    final storage = FakeStorage();
+    final storage = FakeCharacterStorage();
     final vm = CharacterViewModel(storage, ids: SeqIdGen());
 
     // seed: active first, then draft so draft becomes "recent"
@@ -266,7 +295,7 @@ void main() {
     ));
     await storage.store(Character(
       sheetId: 'd1',
-      sheetStatus: SheetStatus.draft_classic,
+      sheetStatus: SheetStatus.draftClassic,
       sheetName: 'D',
       name: 'Draft',
       age: 0,
@@ -295,7 +324,7 @@ void main() {
   group('CharacterViewModel stream + delete', () {
     test('charactersStream emits only non-drafts and updates on changes',
         () async {
-      final storage = FakeStorage();
+      final storage = FakeCharacterStorage();
       final vm = CharacterViewModel(storage, ids: SeqIdGen());
 
       // Seed data BEFORE listening (initial emission exists but we will trigger another)
@@ -341,7 +370,7 @@ void main() {
       ));
       await storage.store(Character(
         sheetId: 'd1',
-        sheetStatus: SheetStatus.draft_classic,
+        sheetStatus: SheetStatus.draftClassic,
         sheetName: 'D1',
         name: 'Draft One',
         age: 0,
@@ -399,7 +428,7 @@ void main() {
 
     test('deleteById removes from storage and clears current if it matches',
         () async {
-      final storage = FakeStorage();
+      final storage = FakeCharacterStorage();
       final vm = CharacterViewModel(storage, ids: SeqIdGen());
 
       await storage.store(Character(
@@ -457,4 +486,248 @@ void main() {
       expect(vm.hasCharacter, isFalse);
     });
   });
+
+  // -------------------------
+  // NEW: Specialization helpers
+  // -------------------------
+  group('CharacterViewModel specialization helpers', () {
+    test('addSpecializedSkill creates generic family if missing and adds spec with correct base', () async {
+      final storage = FakeCharacterStorage();
+      final vm = CharacterViewModel(storage, ids: SeqIdGen());
+      await vm.createCharacter();
+
+      // Start with no skills to make assertions clear
+      vm.character!.skills = [];
+
+      // Add "Science (Biology)"
+      await vm.addSpecializedSkill(category: SkillSpecialization.familyScience, specialization: 'Biology');
+
+      final skills = vm.character!.skills;
+
+      // Generic "Science" exists
+      final generic = skills.firstWhere((s) => s.name == SkillSpecialization.familyScience, orElse: () => Skill(name: '!', base: -1));
+      expect(generic.name, SkillSpecialization.familyScience);
+      expect(generic.category, SkillSpecialization.familyScience);
+      expect(generic.specialization, isNull);
+      expect(generic.base, SkillBases.baseForGeneric(SkillSpecialization.familyScience));
+
+      // Specialized "Science (Biology)" exists with correct base
+      final specName = SkillSpecialization.displayName(SkillSpecialization.familyScience, 'Biology');
+      final bio = skills.firstWhere((s) => s.name == specName, orElse: () => Skill(name: '!', base: -1));
+      expect(bio.name, specName);
+      expect(bio.category, SkillSpecialization.familyScience);
+      expect(bio.specialization, 'Biology');
+      expect(bio.base, SkillBases.baseForSpecialized(SkillSpecialization.familyScience, 'Biology'));
+    });
+
+    test('addSpecializedSkill is idempotent (no duplicates on same spec)', () async {
+      final storage = FakeCharacterStorage();
+      final vm = CharacterViewModel(storage, ids: SeqIdGen());
+      await vm.createCharacter();
+
+      vm.character!.skills = [];
+
+      await vm.addSpecializedSkill(category: SkillSpecialization.familyArtCraft, specialization: 'Painting');
+      await vm.addSpecializedSkill(category: SkillSpecialization.familyArtCraft, specialization: 'Painting');
+
+      final count = vm.character!.skills.where((s) => s.name == 'Art/Craft (Painting)').length;
+      expect(count, 1);
+
+      // Generic exists exactly once too
+      final genCount = vm.character!.skills.where((s) => s.name == 'Art/Craft').length;
+      expect(genCount, 1);
+    });
+
+    test('removeSkillByName removes only specialization, keeps generic family', () async {
+      final storage = FakeCharacterStorage();
+      final vm = CharacterViewModel(storage, ids: SeqIdGen());
+      await vm.createCharacter();
+
+      vm.character!.skills = [];
+
+      await vm.addSpecializedSkill(category: SkillSpecialization.familyScience, specialization: 'Biology');
+      await vm.addSpecializedSkill(category: SkillSpecialization.familyScience, specialization: 'Chemistry');
+
+      // Remove Biology
+      await vm.removeSkillByName('Science (Biology)');
+
+      final names = vm.character!.skills.map((s) => s.name).toSet();
+
+      // Biology removed, Chemistry still there, generic Science still there
+      expect(names.contains('Science (Biology)'), isFalse);
+      expect(names.contains('Science (Chemistry)'), isTrue);
+      expect(names.contains('Science'), isTrue);
+    });
+  });
+
+  group('Specialization skills — classic rules', () {
+  test('editing a generic template is forbidden in creation', () async {
+    // Arrange
+    final storage = FakeCharacterStorage();
+    final ids = SeqIdGen();
+    final vm = CharacterViewModel(storage, ids: ids);
+
+    final occupation = Occupation(
+      id: 'gen',
+      name: 'Generalist',
+      creditMin: 0,
+      creditMax: 99,
+      selectCount: 0,
+      mandatorySkills: const [],
+      skillPool: const [],
+    );
+    final occStorage = FakeOccupationStorage(occupation);
+
+    final attrs = <String, int>{
+      AttrKey.str: 50,
+      AttrKey.con: 50,
+      AttrKey.dex: 50,
+      AttrKey.app: 50,
+      AttrKey.pow: 50,
+      AttrKey.siz: 50,
+      AttrKey.intg: 50,
+      AttrKey.edu: 50,
+    };
+
+    final spec = CreateCharacterSpec(
+      name: 'Tester',
+      age: 25,
+      attributes: attrs,
+      luck: 40,
+      occupationId: 'gen',
+      selectedSkills: const [],
+    );
+
+    await vm.createFromSpec(spec, occupationStorage: occStorage);
+    await Future<void>.delayed(Duration.zero); // let initial save finish
+
+    // Act: try to edit a LOCKED template row
+    vm.updateSkill('Science (Any)', 20);
+    await Future<void>.delayed(Duration.zero); // let save finish
+
+    // Assert: change rejected with a specific message
+    final evt = vm.lastCreationUpdate.value;
+    expect(evt, isNotNull);
+    expect(evt!.result.applied, isFalse);
+    expect(evt.result.messages, contains('forbidden_generic_template'));
+
+    // And ensure we did NOT suddenly add a 'Science (Any)' at 20
+    final c = storage.lastStored!;
+    final maybe20 = c.skills.any(
+      (sk) =>
+          (sk.displayName == 'Science (Any)' || sk.name == 'Science (Any)') &&
+          sk.base == 20,
+    );
+    expect(maybe20, isFalse);
+  });
+
+  test('specialization spends from OCCUPATION pool when its category is occupational', () async {
+    // Arrange
+    final storage = FakeCharacterStorage();
+    final ids = SeqIdGen();
+    final vm = CharacterViewModel(storage, ids: ids);
+
+    // Occupation with CR min = 40 (consumes 40 OCC on replay)
+    final occupation = Occupation(
+      id: 'researcher',
+      name: 'Researcher',
+      creditMin: 40,
+      creditMax: 70,
+      selectCount: 1,
+      mandatorySkills: const [],
+      // We will pick Science as the occupational category via selectedSkills:
+      skillPool: const ['Science (Any)'],
+    );
+    final occStorage = FakeOccupationStorage(occupation);
+
+    // EDU=50 → OCC total = 200; INT=40 → PERSONAL total = 80
+    final attrs = <String, int>{
+      AttrKey.str: 40,
+      AttrKey.con: 40,
+      AttrKey.dex: 40,
+      AttrKey.app: 40,
+      AttrKey.pow: 40,
+      AttrKey.siz: 40,
+      AttrKey.intg: 40, // personal: 80
+      AttrKey.edu: 50,  // occupation: 200
+    };
+
+    final spec = CreateCharacterSpec(
+      name: 'Occ Spec',
+      age: 30,
+      attributes: attrs,
+      luck: 35,
+      occupationId: 'researcher',
+      selectedSkills: const ['Science (Any)'], // treat Science category as OCC
+    );
+
+    await vm.createFromSpec(spec, occupationStorage: occStorage);
+    await Future<void>.delayed(Duration.zero); // let initial save/replay finish
+
+    // Ensure a proper specialization exists before raising its value
+    await vm.addSpecializedSkill(category: 'Science', specialization: 'Biology');
+    await Future<void>.delayed(Duration.zero);
+
+    // Act: raise specialization; should spend from OCC pool (remaining 160).
+    vm.updateSkill('Science (Biology)', 999);
+    await Future<void>.delayed(Duration.zero); // let save finish
+
+    final c = storage.lastStored!;
+    expect(skill(c.skills, 'Science (Biology)'), 161);
+  });
+
+  test('specialization spends from PERSONAL pool when its category is NOT occupational', () async {
+    // Arrange
+    final storage = FakeCharacterStorage();
+    final ids = SeqIdGen();
+    final vm = CharacterViewModel(storage, ids: ids);
+
+    final occupation = Occupation(
+      id: 'driver',
+      name: 'Driver',
+      creditMin: 20,
+      creditMax: 50,
+      selectCount: 0,
+      mandatorySkills: const ['Drive Auto'],
+      // NOT Science here
+      skillPool: const ['Drive Auto', 'Listen'],
+    );
+    final occStorage = FakeOccupationStorage(occupation);
+
+    // EDU=50 → OCC = 200; INT=40 → PERSONAL = 80
+    final attrs = <String, int>{
+      AttrKey.str: 40,
+      AttrKey.con: 40,
+      AttrKey.dex: 40,
+      AttrKey.app: 40,
+      AttrKey.pow: 40,
+      AttrKey.siz: 40,
+      AttrKey.intg: 40, // personal: 80
+      AttrKey.edu: 50,  // occupation: 200
+    };
+
+    final spec = CreateCharacterSpec(
+      name: 'Per Spec',
+      age: 30,
+      attributes: attrs,
+      luck: 35,
+      occupationId: 'driver',
+      selectedSkills: const ['Drive Auto'], // Science not occupational
+    );
+
+    await vm.createFromSpec(spec, occupationStorage: occStorage);
+    await Future<void>.delayed(Duration.zero); // let initial save/replay finish
+
+    // Add a true specialization first
+    await vm.addSpecializedSkill(category: 'Science', specialization: 'Chemistry');
+    await Future<void>.delayed(Duration.zero);
+
+    // Act: raise specialization; should spend from PERSONAL pool (80).
+    vm.updateSkill('Science (Chemistry)', 999);
+    await Future<void>.delayed(Duration.zero); // let save finish
+
+    final c = storage.lastStored!;
+    expect(skill(c.skills, 'Science (Chemistry)'), 63);
+  });
+});
 }

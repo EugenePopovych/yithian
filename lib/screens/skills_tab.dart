@@ -1,15 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:coc_sheet/models/character.dart';
 import 'package:coc_sheet/models/skill.dart';
 import 'package:coc_sheet/models/sheet_status.dart';
-import 'package:coc_sheet/models/creation_update_event.dart';
 import 'package:coc_sheet/models/creation_rule_set.dart';
 import 'package:coc_sheet/viewmodels/character_viewmodel.dart';
 import 'package:coc_sheet/widgets/stat_row.dart';
 import 'package:coc_sheet/widgets/creation_row.dart';
-import 'package:coc_sheet/widgets/inline_creation_feedback.dart';
-import 'package:coc_sheet/screens/dice_roller_screen.dart';
 
 class SkillsTab extends StatefulWidget {
   const SkillsTab({super.key});
@@ -18,20 +16,14 @@ class SkillsTab extends StatefulWidget {
   State<SkillsTab> createState() => _SkillsTabState();
 }
 
+class _Tile {
+  final Widget child;
+  final double weight; // approximate number of "rows" this tile costs
+  const _Tile(this.child, this.weight);
+}
+
 class _SkillsTabState extends State<SkillsTab> {
   final Map<String, TextEditingController> _controllers = {};
-
-  // Positioning relative to the whole StatRow (unchanged layout).
-  // Keep the same right anchor…
-  static const double _bubbleRightInset = 120; // px from row right edge
-
-  // Lift the bubble *above* the TextField height by ~8px
-  static const double _textFieldHeight = 36; // match your field height
-  static const double _bubbleTopInset = -(_textFieldHeight + 8);
-
-  // Name cell in StatRow: left padding = 8, name width = 130, icon size = 16
-  static const double _crIconLeftInset = 122; // 8 + 130 - 16
-  static const double _crIconTopInset  = 12;  // slightly above the text baseline
 
   @override
   void dispose() {
@@ -43,9 +35,8 @@ class _SkillsTabState extends State<SkillsTab> {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = Provider.of<CharacterViewModel>(context, listen: false);
-    final character = viewModel.character;
-    final screenWidth = MediaQuery.of(context).size.width;
+    final vm = Provider.of<CharacterViewModel>(context, listen: false);
+    final character = vm.character;
 
     if (character == null) {
       return const Center(
@@ -55,19 +46,7 @@ class _SkillsTabState extends State<SkillsTab> {
       );
     }
 
-    const double rowWidth = 346.0;
-    final columnsCount = (screenWidth / (rowWidth + 16)).floor().clamp(2, 4);
-    final sortedSkills = [...character.skills]
-      ..sort((a, b) => a.name.compareTo(b.name));
-
-    // Split the sorted list into columns
-    final rowsPerColumn = (sortedSkills.length / columnsCount).ceil();
-    final columns = List.generate(columnsCount, (col) {
-      final start = col * rowsPerColumn;
-      final end = (start + rowsPerColumn).clamp(0, sortedSkills.length);
-      final slice = sortedSkills.sublist(start, end);
-      return slice;
-    });
+    final draft = character.sheetStatus.isDraft;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -77,41 +56,61 @@ class _SkillsTabState extends State<SkillsTab> {
           // Draft-only creation panel for Skills (shows pools + Finish)
           CreationRow.skills(),
 
-          Text("Skills", style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 12),
+
+          if (draft) _buildPoolLegend(context, vm),
+
           const SizedBox(height: 8),
 
-          // Rebuild the skills grid when the last creation update changes
-          ValueListenableBuilder<CreationUpdateEvent?>(
-            valueListenable: viewModel.lastCreationUpdate,
-            builder: (context, event, _) {
+          // Layout with vertical fill ordering
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Build the tile list first (groups for categories that have specs, solo rows otherwise)
+              final tiles = _buildSkillTiles(context, vm, character, draft);
+
+              // Determine number of columns based on available width and a comfortable minimum card width
+              const gutter = 16.0;
+              final total = constraints.maxWidth;
+
+// Fit as many whole tiles as possible:  [tile][gutter][tile][gutter]...
+// Use integer division to avoid rounding up and causing overflow.
+              int columns = ((total + gutter) ~/ (kStatRowTileWidth + gutter));
+              if (columns < 1) columns = 1;
+              if (columns > 4) columns = 4; // optional sanity cap
+
+              final columnsData = _splitTilesByWeight(tiles, columns);
+
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: columns.map((columnSkills) {
-                  return Container(
-                    width: rowWidth,
-                    margin: const EdgeInsets.only(right: 16),
-                    padding: const EdgeInsets.all(8.0),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      children: columnSkills
-                          .map(
-                            (skill) => Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 4.0),
-                              child: _buildSkillRow(
-                                skill,
-                                viewModel,
-                                draft: character.sheetStatus.isDraft,
-                              ),
-                            ),
-                          )
-                          .toList(),
+                children: List.generate(columns, (i) {
+                  final colChildren = <Widget>[];
+                  final colTiles = columnsData[i];
+                  for (var j = 0; j < colTiles.length; j++) {
+                    if (j > 0) colChildren.add(const SizedBox(height: 12));
+                    // Fix width per tile and avoid stretch so trailing icons won't overflow/overlap
+                    colChildren.add(
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: SizedBox(
+                          width: kStatRowTileWidth,
+                          child: colTiles[j].child,
+                        ),
+                      ),
+                    );
+                  }
+                  return Expanded(
+                    child: Padding(
+                      padding:
+                          EdgeInsets.only(right: i == columns - 1 ? 0 : 16),
+                      child: Column(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start, // <-- not stretch
+                        children: colChildren,
+                      ),
                     ),
                   );
-                }).toList(),
+
+                }),
               );
             },
           ),
@@ -120,17 +119,315 @@ class _SkillsTabState extends State<SkillsTab> {
     );
   }
 
-  Widget _buildSkillRow(
-    Skill skill,
-    CharacterViewModel viewModel, {
-    required bool draft,
-  }) {
-    // Ensure controller exists and reflects current model value
+  List<_Tile> _buildSkillTiles(
+    BuildContext context,
+    CharacterViewModel vm,
+    Character c,
+    bool draft,
+  ) {
+    // Families that support specializations — these render as grouped tiles.
+    const specFamilies = {
+      'Language',
+      'Science',
+      'Art/Craft',
+      'Pilot',
+      'Survival'
+    };
+
+    final all = List<Skill>.from(c.skills);
+
+    bool isLegacyAnyGeneric(String name, String category) {
+      // e.g., "Science (Any)"
+      final m = RegExp(r'^(.*)\s*\(\s*Any\s*\)$').firstMatch(name);
+      if (m == null) return false;
+      final cat = m.group(1)!.trim();
+      return cat == category;
+    }
+
+    Skill? findGenericForCategory(String category) {
+      // 1) Plain family name used as generic (e.g., "Science")
+      final plain = firstWhereOrNull(
+        all,
+        (s) => !s.isSpecialized && s.name == category,
+      );
+      if (plain != null) {
+        return plain;
+      }
+
+      // 2) Structured generic (if you ever create them that way)
+      final structured = firstWhereOrNull(
+        all,
+        (s) =>
+            !s.isSpecialized &&
+            s.category == category &&
+            s.specialization == null,
+      );
+      if (structured != null) {
+        return structured;
+      }
+
+      // 3) Legacy templates
+      if (category == 'Language') {
+        // Important: "Language (Own)" is NOT a generic template
+        final langOther = firstWhereOrNull(
+          all,
+          (s) => !s.isSpecialized && s.name == 'Language (Other)',
+        );
+        if (langOther != null) {
+          return langOther;
+        }
+      }
+
+      final legacyAny = firstWhereOrNull(
+        all,
+        (s) => !s.isSpecialized && isLegacyAnyGeneric(s.name, category),
+      );
+      return legacyAny;
+    }
+
+    List<Skill> specsFor(String category) {
+      final list = all
+          .where((s) => s.isSpecialized && s.category == category)
+          .toList()
+        ..sort((a, b) => a.displayName.compareTo(b.displayName));
+      return list;
+    }
+
+    /// Determine if a skill belongs to a specialization family and return that category.
+    /// - Specialization → its .category
+    /// - Generic (plain "Science", "Art/Craft", etc.) → that family name
+    /// - Otherwise → null
+    String? familyCategoryOf(Skill s) {
+      if (s.isSpecialized && specFamilies.contains(s.category)) {
+        return s.category!;
+      }
+      // Plain generic family names (ensure "Language (Own)" is NOT treated as family)
+      if (!s.isSpecialized &&
+          specFamilies.contains(s.name) &&
+          s.name != 'Language (Own)') {
+        return s.name;
+      }
+      return null;
+    }
+
+    // Sort alphabetically by display name for stable order.
+    final sorted = List<Skill>.from(all)
+      ..sort((a, b) => a.displayName.compareTo(b.displayName));
+
+    final consumed = <Skill>{};
+    final tiles = <_Tile>[];
+
+    for (var idx = 0; idx < sorted.length; idx++) {
+      final s = sorted[idx];
+      if (consumed.contains(s)) {
+        continue;
+      }
+
+      final family = familyCategoryOf(s);
+      if (family != null) {
+        // Build the group *here* at this alphabetical position.
+        final generic = findGenericForCategory(family);
+        final specs = specsFor(family);
+
+        if (generic == null && specs.isEmpty) {
+          continue;
+        }
+
+        if (generic != null) consumed.add(generic);
+        consumed.addAll(specs);
+
+        final tile = _buildSpecGroupTile(
+          context: context,
+          vm: vm,
+          draft: draft,
+          category: family,
+          generic: generic, // locked row first if present
+          specs: specs, // then all specializations
+        );
+
+        // Weight ≈ number of rows: generic (if any) + specs + header(0.8)
+        final weight = (generic != null ? 1.0 : 0.0) + specs.length + 0.8;
+        tiles.add(_Tile(tile, weight));
+        continue;
+      }
+
+      // Not a family member → solo row.
+      consumed.add(s);
+      final row = _buildSkillRowSolo(s, vm, false, draft: draft);
+      tiles.add(_Tile(row, 1.0));
+    }
+
+    return tiles;
+  }
+
+  List<List<_Tile>> _splitTilesByWeight(List<_Tile> tiles, int columns) {
+    final result = List.generate(columns, (_) => <_Tile>[]);
+    final total = tiles.fold<double>(0, (s, t) => s + t.weight);
+    final targetPerCol = (total / columns);
+
+    double acc = 0;
+    int col = 0;
+
+    for (final t in tiles) {
+      if (col >= columns) {
+        // Overflow safety: dump into last column
+        result[columns - 1].add(t);
+        continue;
+      }
+      result[col].add(t);
+      acc += t.weight;
+
+      // Move to next column if we've met/exceeded the target
+      if (acc >= targetPerCol && col < columns - 1) {
+        col += 1;
+        acc = 0;
+      }
+    }
+
+    return result;
+  }
+
+  /// Null-safe finder returning T? (used to avoid 'null as T' casts in firstWhere)
+  T? firstWhereOrNull<T>(Iterable<T> items, bool Function(T) test) {
+    for (final it in items) {
+      if (test(it)) return it;
+    }
+    return null;
+  }
+
+// A single row widget for non-grouped skills (or families without specializations yet)
+  Widget _buildSkillRowSolo(Skill skill, CharacterViewModel vm, bool? lockedSkill,
+      {required bool draft}) {
     _controllers.putIfAbsent(
-      skill.name,
+      skill.displayName,
       () => TextEditingController(text: skill.base.toString()),
     );
-    final ctl = _controllers[skill.name]!;
+    final ctl = _controllers[skill.displayName]!;
+    final textShouldBe = skill.base.toString();
+    if (ctl.text != textShouldBe) {
+      ctl.text = textShouldBe;
+      ctl.selection =
+          TextSelection.fromPosition(TextPosition(offset: ctl.text.length));
+    }
+
+    final locked = lockedSkill! || isCalculatedDuringDraft(draft: draft, skillName: skill.name);
+    final isOcc = vm.isOccupationSkill(skill.displayName);
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        StatRow(
+          name: skill.displayName,
+          base: skill.base,
+          hard: skill.hard,
+          extreme: skill.extreme,
+          onTap: () {},
+          controller: ctl,
+          onBaseChanged: (v) {
+            vm.updateSkill(skill.displayName, v);
+          },
+          enabled: draft && !locked,
+          locked: locked,
+          occupation: isOcc,
+          onDelete: null,
+        ),
+        if (draft) _buildCreationBubbleFor(skill.displayName, context, vm),
+      ],
+    );
+  }
+
+// A grouped tile for a specialization family (header + generic + specialization rows)
+  Widget _buildSpecGroupTile({
+    required BuildContext context,
+    required CharacterViewModel vm,
+    required bool draft,
+    required String category,
+    required Skill? generic,
+    required List<Skill> specs,
+  }) {
+    final children = <Widget>[];
+
+    // 1) Generic locked row first (if present), borderless inside the group
+    if (generic != null) {
+      children.add(
+        _buildSkillRowSolo(
+          generic,
+          vm,
+          true,
+          draft: draft,
+        )._asBorderless(), // helper extension below makes showBorder=false
+      );
+    }
+
+    // Small gap between generic and first spec for clarity (optional)
+    if (generic != null && specs.isNotEmpty) {
+      children.add(const SizedBox(height: 4));
+    }
+
+    // 2) Specialization rows (editable), borderless inside the group
+    for (var i = 0; i < specs.length; i++) {
+      final s = specs[i];
+      children.add(
+        _buildSpecRowBorderless(
+          skill: s,
+          vm: vm,
+          draft: draft,
+          category: category,
+        ),
+      );
+      if (i < specs.length - 1) {
+        children.add(const SizedBox(height: 4));
+      }
+    }
+
+    // 3) Bottom “+ Add” row (same height as StatRow)
+    children.add(const SizedBox(height: 4));
+    children.add(
+      _AddRow(
+        label: 'Add $category',
+        enabled: draft,
+        onTap: draft
+            ? () async {
+                final spec = await _promptForSpecialization(context, category);
+                if (spec == null || spec.trim().isEmpty) return;
+                await vm.addSpecializedSkill(
+                  category: category,
+                  specialization: spec.trim(),
+                );
+                if (mounted) setState(() {});
+              }
+            : null,
+      ),
+    );
+
+    // 4) Whole group looks like one skill: a single thin black border, no header, no alt background
+    return Container(
+      // padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        border: Border.all(color: Colors.black, width: 1),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: children,
+      ),
+    );
+  }
+
+  Widget _buildSpecRowBorderless({
+    required Skill? skill,
+    required CharacterViewModel vm,
+    required bool draft,
+    required String category,
+  }) {
+    if (skill == null) return const SizedBox.shrink();
+
+    _controllers.putIfAbsent(
+      skill.displayName,
+      () => TextEditingController(text: skill.base.toString()),
+    );
+    final ctl = _controllers[skill.displayName]!;
     final textShouldBe = skill.base.toString();
     if (ctl.text != textShouldBe) {
       ctl.text = textShouldBe;
@@ -139,104 +436,247 @@ class _SkillsTabState extends State<SkillsTab> {
       );
     }
 
-    final isCalculated =
-        isCalculatedDuringDraft(draft: draft, skillName: skill.name);
-
-    // Occupation badge
-    final bool isOcc = viewModel.isOccupationSkill(skill.name);
-
-    // Inline feedback (error/partial) anchored to this row
-    final evt = viewModel.lastCreationUpdate.value;
-    final bool showFeedback = evt != null &&
-        evt.target == ChangeTarget.skill &&
-        evt.name == skill.name &&
-        (!evt.applied || evt.codes.isNotEmpty);
-
-    final String feedbackText = showFeedback
-        ? (evt.friendlyMessages.isNotEmpty
-            ? evt.friendlyMessages.first
-            : (!evt.applied ? 'Change rejected.' : 'Applied with limits.'))
-        : '';
-    final bool isError = showFeedback && !evt.applied;
-    final bool isWarn = showFeedback && evt.applied && evt.codes.isNotEmpty;
-
-    if (showFeedback) {
-      final currentEvt = evt;
-      Timer(const Duration(seconds: 3), () {
-        if (viewModel.lastCreationUpdate.value == currentEvt) {
-          viewModel.lastCreationUpdate.value = null;
-        }
-      });
-    }
-
-    // Credit Rating tooltip (range), shown inline in the name cell
-    final bool isCredit = skill.name.toLowerCase() == 'credit rating';
-    final range = viewModel.creditRatingRange; // may be null
+    final isOcc = vm.isOccupationSkill(skill.displayName);
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
         StatRow(
-          name: skill.name,
+          name: skill.isSpecialized
+              ? (skill.specialization ?? skill.displayName)
+              : skill.displayName,
           base: skill.base,
           hard: skill.hard,
           extreme: skill.extreme,
+          onTap: () {},
           controller: ctl,
-          enabled: !isCalculated,
-          locked: isCalculated,
+          onBaseChanged: (_) {}, // locked; ignore edits
+          enabled: skill.isSpecialized,
+          locked: !skill.isSpecialized,
           occupation: isOcc,
-          onBaseChanged: (value) => viewModel.updateSkill(skill.name, value),
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => DiceRollerScreen(
-                  skillName: skill.name,
-                  base: skill.base,
-                  hard: skill.base ~/ 2,
-                  extreme: skill.base ~/ 5,
-                ),
-              ),
-            );
-          },
+          onDelete: draft
+              ? () async {
+                  await vm.removeSkillByName(skill.displayName);
+                  if (mounted) setState(() {});
+                }
+              : null,
+          showBorder: false, // no inner border; group has the border
         ),
-
-        // Per-row inline feedback bubble
-        if (showFeedback)
-          Positioned(
-            right: _bubbleRightInset,
-            top: _bubbleTopInset,
-            child: IgnorePointer(
-              ignoring: true,
-              child: InlineCreationFeedback(
-                message: feedbackText,
-                isError: isError,
-                isWarning: isWarn,
-              ),
-            ),
-          ),
-
-        // Credit Rating range tooltip (inside the 130px name cell, top-right)
-        if (isCredit && range != null)
-          Positioned(
-            left: _crIconLeftInset,
-            top: _crIconTopInset,
-            child: Tooltip(
-              message: 'Required range: ${range.min}–${range.max}',
-              child: const Icon(Icons.info_outline, size: 16),
-            ),
-          ),
+        if (draft) _buildCreationBubbleFor(skill.displayName, context, vm),
       ],
+    );
+  }
+
+  Future<String?> _promptForSpecialization(
+      BuildContext context, String category) async {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text('Add $category specialization'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText:
+                  category == 'Language' ? 'e.g., Latin' : 'e.g., Biology',
+            ),
+            onSubmitted: (v) => Navigator.of(ctx).pop(v.trim()),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(null),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
+              child: const Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  String _creationMessageText(String key) {
+    switch (key) {
+      case 'forbidden_generic_template':
+        return 'Edit the specialization, not the template.';
+      case 'forbidden_calculated':
+        return 'This value is calculated during creation.';
+      case 'no_points_remaining':
+        return 'No points remaining in the selected pool.';
+      case 'partial_due_to_pool':
+        return 'Raised partially (pool limit).';
+      case 'forbidden_cthulhu_mythos':
+        return 'Cannot increase Cthulhu Mythos with normal points.';
+      default:
+        return key;
+    }
+  }
+
+  Widget _buildCreationBubbleFor(
+      String skillName, BuildContext context, CharacterViewModel vm) {
+    final evt = vm.lastCreationUpdate.value;
+    final visible = evt != null &&
+        evt.target == ChangeTarget.skill &&
+        evt.name.toLowerCase() == skillName.toLowerCase() &&
+        evt.result.messages.isNotEmpty;
+
+    if (!visible) return const SizedBox.shrink();
+
+    final msg = evt.result.messages.first;
+    return Positioned(
+      right: 8,
+      top: -6,
+      child: _Bubble(
+        text: _creationMessageText(msg),
+        color: Theme.of(context).colorScheme.errorContainer,
+        textColor: Theme.of(context).colorScheme.onErrorContainer,
+      ),
+    );
+  }
+
+  // Little legend at top (optional)
+  Widget _buildPoolLegend(BuildContext context, CharacterViewModel vm) {
+    final occRem = vm.occupationPointsRemaining ?? 0;
+    final perRem = vm.personalPointsRemaining ?? 0;
+    return Row(
+      children: [
+        _LegendChip(label: 'Occupation remaining: $occRem'),
+        const SizedBox(width: 8),
+        _LegendChip(label: 'Personal remaining: $perRem'),
+      ],
+    );
+  }
+
+// Helper: which skills are calculated during creation (locked by rules)
+  bool isCalculatedDuringDraft(
+      {required bool draft, required String skillName}) {
+    switch (skillName) {
+      case 'Dodge':
+      case 'Language (Own)':
+        return draft;
+      default:
+        return false;
+    }
+  }
+}
+
+extension on Widget {
+  // Convenience to reuse _buildSkillRowSolo output but hide its border inside the group
+  Widget _asBorderless() {
+    if (this is! Stack) return this;
+    final stack = this as Stack;
+    final base = stack.children.firstWhere((w) => w is StatRow, orElse: () => this);
+    if (base is StatRow) {
+      return Stack(
+        clipBehavior: stack.clipBehavior,
+        children: [
+          StatRow(
+            name: base.name,
+            base: base.base,
+            hard: base.hard,
+            extreme: base.extreme,
+            onTap: base.onTap,
+            controller: base.controller,
+            onBaseChanged: base.onBaseChanged,
+            enabled: base.enabled,
+            locked: base.locked,
+            occupation: base.occupation,
+            onDelete: base.onDelete,
+            showBorder: false, // override
+          ),
+          ...stack.children.skip(1), // keep bubbles/overlays
+        ],
+      );
+    }
+    return this;
+  }
+}
+
+class _AddRow extends StatelessWidget {
+  final String label;
+  final bool enabled;
+  final VoidCallback? onTap;
+  const _AddRow({required this.label, required this.enabled, this.onTap});
+
+  static const double _kStatRowHeight = 48.0; // height of one StatRow
+
+  @override
+  Widget build(BuildContext context) {
+    // Mimic StatRow height & padding; no internal border (group draws it)
+    return SizedBox(
+      height: _kStatRowHeight,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Row(
+              children: [
+                const Icon(Icons.add, size: 18),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
 
-// Helper: which skills are calculated during creation (locked by rules)
-bool isCalculatedDuringDraft({required bool draft, required String skillName}) {
-  switch (skillName) {
-    case 'Dodge':
-    case 'Language (Own)':
-      return draft;
-    default:
-      return false;
+class _Bubble extends StatelessWidget {
+  final String text;
+  final Color? color;
+  final Color? textColor;
+  const _Bubble({required this.text, this.color, this.textColor});
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = color ?? Theme.of(context).colorScheme.surfaceContainerHighest;
+    final fg = textColor ?? Theme.of(context).colorScheme.onSurfaceVariant;
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: ShapeDecoration(
+          color: bg,
+          shape: const StadiumBorder(),
+          shadows: const [
+            BoxShadow(
+                blurRadius: 4,
+                spreadRadius: 0,
+                offset: Offset(0, 1),
+                color: Colors.black12)
+          ],
+        ),
+        child: Text(text,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(color: fg)),
+      ),
+    );
+  }
+}
+
+class _LegendChip extends StatelessWidget {
+  final String label;
+  const _LegendChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      label: Text(label),
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
+    );
   }
 }

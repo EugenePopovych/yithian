@@ -15,7 +15,7 @@ class CreateCharacterRequest {
 Future<CreateCharacterRequest?> showCreateCharacterDialog(BuildContext context) {
   final nameCtrl = TextEditingController();
   final occCtrl = TextEditingController();
-  SheetStatus status = SheetStatus.draft_classic;
+  SheetStatus status = SheetStatus.draftClassic;
 
   return showDialog<CreateCharacterRequest?>(
     context: context,
@@ -43,19 +43,19 @@ Future<CreateCharacterRequest?> showCreateCharacterDialog(BuildContext context) 
                 decoration: const InputDecoration(labelText: 'Creation method'),
                 items: const [
                   DropdownMenuItem(
-                    value: SheetStatus.draft_classic,
+                    value: SheetStatus.draftClassic,
                     child: Text('Classic (rolled)'),
                   ),
                   DropdownMenuItem(
-                    value: SheetStatus.draft_points,
+                    value: SheetStatus.draftPoints,
                     child: Text('Point-buy'),
                   ),
                   DropdownMenuItem(
-                    value: SheetStatus.draft_free,
+                    value: SheetStatus.draftFree,
                     child: Text('Freeform'),
                   ),
                 ],
-                onChanged: (v) => status = v ?? SheetStatus.draft_classic,
+                onChanged: (v) => status = v ?? SheetStatus.draftClassic,
               ),
             ],
           ),

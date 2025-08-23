@@ -11,12 +11,31 @@ class HiveSkill extends HiveObject {
   @HiveField(1)
   int base;
 
-  HiveSkill({required this.name, required this.base});
+  /// New: specialization support (nullable, added after initial schema)
+  @HiveField(2)
+  String? category;
+
+  @HiveField(3)
+  String? specialization;
+
+  HiveSkill({
+    required this.name,
+    required this.base,
+    this.category,
+    this.specialization,
+  });
 
   factory HiveSkill.fromSkill(Skill s) => HiveSkill(
-    name: s.name,
-    base: s.base,
-  );
+        name: s.name,
+        base: s.base,
+        category: s.category,
+        specialization: s.specialization,
+      );
 
-  Skill toSkill() => Skill(name: name, base: base);
+  Skill toSkill() => Skill(
+        name: name,
+        base: base,
+        category: category,
+        specialization: specialization,
+      );
 }

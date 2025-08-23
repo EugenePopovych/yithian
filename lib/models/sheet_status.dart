@@ -2,14 +2,14 @@
 enum SheetStatus {
   active,
   archived,
-  draft_classic,
-  draft_points,
-  draft_free,
+  draftClassic,
+  draftPoints,
+  draftFree,
 }
 
 extension SheetStatusX on SheetStatus {
   bool get isDraft =>
-      this == SheetStatus.draft_classic ||
-      this == SheetStatus.draft_points ||
-      this == SheetStatus.draft_free;
+      this == SheetStatus.draftClassic ||
+      this == SheetStatus.draftPoints ||
+      this == SheetStatus.draftFree;
 }

@@ -175,22 +175,21 @@ class _AttributesTabState extends State<AttributesTab> {
         if (showMax) ...[
           const SizedBox(width: 8),
           Text("/ $max"),
+          ],
         ],
-      ],
-    ),
-  );
-}
+      ),
+    );
+  }
 
   Widget _buildAttributesGrid(CharacterViewModel viewModel, int columns) {
     final character = viewModel.character!;
-    const double rowWidth = 330.0;
 
     return Wrap(
       spacing: 16.0,
       runSpacing: 8.0,
       children: character.attributes.map((attribute) {
         return SizedBox(
-          width: rowWidth,
+          width: kStatRowTileWidth,
           child: _buildAttributeRow(attribute, viewModel),
         );
       }).toList(),
@@ -277,6 +276,9 @@ class _AttributesTabState extends State<AttributesTab> {
       base: attribute.base,
       hard: attribute.hard,
       extreme: attribute.extreme,
+      locked: false,
+      enabled: true,
+      occupation: false,
       controller: _controllers[attribute.name]!,
       onBaseChanged: (value) =>
           viewModel.updateAttribute(attribute.name, value),

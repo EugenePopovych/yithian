@@ -276,9 +276,9 @@ void main() {
     test('SheetStatus isDraft helper works', () {
       expect(SheetStatus.active.isDraft, isFalse);
       expect(SheetStatus.archived.isDraft, isFalse);
-      expect(SheetStatus.draft_classic.isDraft, isTrue);
-      expect(SheetStatus.draft_points.isDraft, isTrue);
-      expect(SheetStatus.draft_free.isDraft, isTrue);
+      expect(SheetStatus.draftClassic.isDraft, isTrue);
+      expect(SheetStatus.draftPoints.isDraft, isTrue);
+      expect(SheetStatus.draftFree.isDraft, isTrue);
     });
   });
 }

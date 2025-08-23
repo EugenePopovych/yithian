@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:coc_sheet/models/creation_rule_set.dart';
 import 'package:coc_sheet/models/credit_rating_range.dart';
+import 'package:coc_sheet/models/skill.dart';
 
 class ClassicCreationRuleSet extends CreationRuleSet with SkillPointPools {
   ClassicCreationRuleSet({bool Function(String skillName)? isOccupationSkill})
@@ -9,19 +10,7 @@ class ClassicCreationRuleSet extends CreationRuleSet with SkillPointPools {
   @override String get id => 'classic';
   @override String get label => 'Classic (Rolled)';
 
-  Set<String>? _chosenOcc;
-  CreditRatingRange? _crRange;
-
-  @override
-  void seedOccupationSkills(Set<String> skills) {
-    _chosenOcc = skills.map((s) => s.toLowerCase()).toSet();
-  }
-
-  @override
-  bool isOccupationSkill(String name) => _isOccupation(name);
-
-  @override
-  CreditRatingRange? get creditRatingRange => _crRange;
+  Set<String>? _chosenOcc; // lowercased strings of occupation skills as seeded
 
   // Attribute families
   static const _threeD6 = <String>{'Strength','Constitution','Dexterity','Appearance','Power'};
@@ -29,14 +18,71 @@ class ClassicCreationRuleSet extends CreationRuleSet with SkillPointPools {
   static const _min3d6x5 = 15, _max3d6x5 = 90;
   static const _min2d6p6x5 = 40, _max2d6p6x5 = 90;
 
+  // Generic template skills that are LOCKED during creation
+  static const _genericTemplates = <String>{
+    'art/craft (any)',
+    'science (any)',
+    'survival (any)',
+    'pilot (any)',
+    'language (other)',
+  };
+
   final bool Function(String skillName)? _isOcc;
 
-  bool _isOccupation(String skill) {
-    final l = skill.toLowerCase();
-    if (l == 'credit rating') return true; 
-    if (_chosenOcc != null && _chosenOcc!.contains(l)) return true;
-    return _isOcc?.call(skill) ?? false;
+  // ---------- Occupation handling (by category/template) ----------
+
+  @override
+  void seedOccupationSkills(Set<String> skills) {
+    // Store lowercased to compare quickly and stably
+    _chosenOcc = skills.map((s) => s.toLowerCase()).toSet();
   }
+
+  @override
+  bool isOccupationSkill(String name) => _isOccupation(name);
+
+  /// Determine if a skill name (legacy or display) should use the occupation pool.
+  /// Resolves specializations by their category → template.
+  bool _isOccupation(String name) {
+    if (name.toLowerCase() == 'credit rating') return true;
+
+    final s = _findSkillByAnyName(name);
+    if (s != null && s.isSpecialized) {
+      final tmpl = _templateNameForCategory(s.category!);
+      final ltmpl = tmpl.toLowerCase();
+      if (_chosenOcc != null && _chosenOcc!.contains(ltmpl)) return true;
+      return _isOcc?.call(tmpl) ?? false;
+    }
+
+    final key = name.toLowerCase(); // assume this is already the template or plain skill
+    if (_chosenOcc != null && _chosenOcc!.contains(key)) return true;
+    return _isOcc?.call(name) ?? false;
+  }
+
+  /// Map a category to its generic template name.
+  /// Language -> "Language (Other)", others -> "<Cat> (Any)".
+  String _templateNameForCategory(String category) {
+    return category.toLowerCase() == 'language'
+        ? 'Language (Other)'
+        : '$category (Any)';
+  }
+
+  /// For a concrete [Skill], return the template name used to look up its base.
+  String _templateForSkill(Skill s) {
+    if (s.isSpecialized) {
+      return _templateNameForCategory(s.category!);
+    }
+    return s.name;
+  }
+
+  Skill? _findSkillByAnyName(String q) {
+    for (final s in character.skills) {
+      if (s.name == q) return s;                 // legacy/internal name
+      if (s.displayName == q) return s;          // UI display name
+    }
+    return null;
+  }
+
+  // ---------- Attribute helpers ----------
 
   int _clampAttr(String name, int v) {
     if (_threeD6.contains(name)) return v.clamp(_min3d6x5, _max3d6x5);
@@ -90,6 +136,8 @@ class ClassicCreationRuleSet extends CreationRuleSet with SkillPointPools {
     _replaySpentFromCharacter();
   }
 
+  // ---------- Rebuild pools by diffing current skills vs bases ----------
+
   void _replaySpentFromCharacter() {
     final dex = attr('Dexterity');
     final edu = attr('Education');
@@ -142,21 +190,25 @@ class ClassicCreationRuleSet extends CreationRuleSet with SkillPointPools {
       'Track': 10,
     };
 
-    int baseFor(String name) {
-      if (name == 'Dodge') return (dex / 2).floor();
-      if (name == 'Language (Own)') return edu;
-      return fixed[name] ?? 0; // unknown/custom → assume 0
+    int baseFor(Skill s) {
+      final n = s.name;
+      if (n == 'Dodge') return (dex / 2).floor();
+      if (n == 'Language (Own)') return edu;
+      final key = _templateForSkill(s);
+      return fixed[key] ?? 0; // unknown/custom → assume 0
     }
 
     for (final s in character.skills) {
-      final delta = s.base - baseFor(s.name);
+      final delta = s.base - baseFor(s);
       if (delta > 0) {
-        final isOcc = _isOccupation(s.name);
+        final isOcc = _isOccupation(s.displayName);
         // Spend against the appropriate pool to rebuild remaining values.
         spendSkill(isOcc, delta);
       }
     }
   }
+
+  // ---------- Edits during creation ----------
 
   @override
   RuleUpdateResult update(CreationChange change) {
@@ -179,8 +231,14 @@ class ClassicCreationRuleSet extends CreationRuleSet with SkillPointPools {
       return const RuleUpdateResult(applied: false, messages: ['forbidden_calculated']);
     }
 
+    // Lock generic template rows (categories)
+    if (_genericTemplates.contains(lname)) {
+      return const RuleUpdateResult(applied: false, messages: ['forbidden_generic_template']);
+    }
+
+    // Cthulhu Mythos special rule
     if (lname == 'cthulhu mythos') {
-      final cur = skill(change.name);
+      final cur = _skillValueForEditName(change.name);
       if (change.newBase <= cur) {
         refundSkill(cur - change.newBase, preferOccupation: false);
         return RuleUpdateResult(applied: true, effectiveValue: change.newBase);
@@ -188,7 +246,7 @@ class ClassicCreationRuleSet extends CreationRuleSet with SkillPointPools {
       return const RuleUpdateResult(applied: false, messages: ['forbidden_cthulhu_mythos']);
     }
 
-    final cur = skill(change.name);
+    final cur = _skillValueForEditName(change.name);
     var target = change.newBase;
 
     if (target == cur) {
@@ -196,11 +254,12 @@ class ClassicCreationRuleSet extends CreationRuleSet with SkillPointPools {
     }
 
     if (target < cur) {
+      // Refund to pools; prefer the pool that was likely used (occupation vs personal)
       refundSkill(cur - target, preferOccupation: _isOccupation(change.name));
       return RuleUpdateResult(applied: true, effectiveValue: target);
     }
 
-    // Increase: spend from the appropriate pool.
+    // Increase: spend from the appropriate pool (resolve by category/template).
     final need = target - cur;
     final occ = _isOccupation(change.name);
     final grant = spendSkill(occ, need);
@@ -215,6 +274,15 @@ class ClassicCreationRuleSet extends CreationRuleSet with SkillPointPools {
       messages: grant == need ? const [] : const ['partial_due_to_pool'],
     );
   }
+
+  int _skillValueForEditName(String name) {
+    final s = _findSkillByAnyName(name);
+    if (s != null) return s.base;
+    // Fallback to legacy lookup by exact name
+    return skill(name);
+  }
+
+  // ---------- Attribute rolling ----------
 
   @override
   void rollAttributes() {
@@ -242,7 +310,6 @@ class ClassicCreationRuleSet extends CreationRuleSet with SkillPointPools {
 
   @override
   void seedCreditRatingRange(CreditRatingRange range) {
-    _crRange = range;
   }
 
   @override

@@ -141,7 +141,7 @@ void main() {
 
     // Identity / status
     expect(c!.sheetId, 'TEST-1');
-    expect(c.sheetStatus, SheetStatus.draft_classic, reason: 'Should remain a draft after creation');
+    expect(c.sheetStatus, SheetStatus.draftClassic, reason: 'Should remain a draft after creation');
     expect(c.name, 'Jane Doe');
     expect(c.occupation, 'Police Detective');
     expect(c.age, 28);
@@ -168,7 +168,7 @@ void main() {
     // Skills seeded with bases (including dynamic)
     expect(_skill(c.skills, 'Dodge'), (attrs[AttrKey.dex]! / 2).floor());
     expect(_skill(c.skills, 'Language (Own)'), attrs[AttrKey.edu]);
-    expect(_skill(c.skills, 'Credit Rating'), 0);
+    expect(_skill(c.skills, 'Credit Rating'), occupation.creditMin);
     expect(_skill(c.skills, 'Spot Hidden'), expectedBaseSkills['Spot Hidden']);
 
     // Sanity after skills set (Mythos base is 0 → maxSanity 99)

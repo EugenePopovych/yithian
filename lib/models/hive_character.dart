@@ -241,9 +241,9 @@ SheetStatus _decodeStatus(String? code) {
   switch (code) {
     case 'active': return SheetStatus.active;
     case 'archived': return SheetStatus.archived;
-    case 'draft_classic': return SheetStatus.draft_classic;
-    case 'draft_points': return SheetStatus.draft_points;
-    case 'draft_free': return SheetStatus.draft_free;
+    case 'draft_classic': return SheetStatus.draftClassic;
+    case 'draft_points': return SheetStatus.draftPoints;
+    case 'draft_free': return SheetStatus.draftFree;
     default: return SheetStatus.active;
   }
 }
@@ -251,8 +251,8 @@ String _encodeStatus(SheetStatus s) {
   switch (s) {
     case SheetStatus.active: return 'active';
     case SheetStatus.archived: return 'archived';
-    case SheetStatus.draft_classic: return 'draft_classic';
-    case SheetStatus.draft_points: return 'draft_points';
-    case SheetStatus.draft_free: return 'draft_free';
+    case SheetStatus.draftClassic: return 'draft_classic';
+    case SheetStatus.draftPoints: return 'draft_points';
+    case SheetStatus.draftFree: return 'draft_free';
   }
 }

@@ -29,7 +29,9 @@ class ClassicRolls {
 
   int d6() => _rng.nextInt(6) + 1;
   int d10() => _rng.nextInt(10) + 1;
+  // ignore: non_constant_identifier_names
   int _3d6() => d6() + d6() + d6();
+  // ignore: non_constant_identifier_names
   int _2d6() => d6() + d6();
 
   int roll3d6x5() => _3d6() * 5;
