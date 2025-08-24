@@ -201,9 +201,8 @@ class ClassicCreationRuleSet extends CreationRuleSet with SkillPointPools {
     for (final s in character.skills) {
       final delta = s.base - baseFor(s);
       if (delta > 0) {
-        final isOcc = _isOccupation(s.displayName);
         // Spend against the appropriate pool to rebuild remaining values.
-        spendSkill(isOcc, delta);
+        spendSkill(s.isOccupation, delta);
       }
     }
   }

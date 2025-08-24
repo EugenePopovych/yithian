@@ -15,6 +15,8 @@ class Skill {
   String? category;
   String? specialization;
 
+  bool isOccupation = false;
+
   Skill({
     required this.name,
     required int base,

@@ -1,89 +1,2336 @@
 {
-  "version": 1,
-  "occupations": [
-    {
-      "id": "antiquarian",
-      "name": "Antiquarian",
-      "creditMin": 30,
-      "creditMax": 70,
-      "selectCount": 8,
-      "mandatorySkills": ["Credit Rating"],
-      "skillPool": [
-        "Appraise",
-        "Art/Craft (Any)",
-        "History",
-        "Language (Own)",
-        "Language (Other)",
-        "Library Use",
-        "Listen",
-        "Persuade",
-        "Psychology",
-        "Spot Hidden"
-      ]
-    },
-    {
-      "id": "detective",
-      "name": "Detective (Police or Private)",
-      "creditMin": 20,
-      "creditMax": 50,
-      "selectCount": 8,
-      "mandatorySkills": ["Credit Rating"],
-      "skillPool": [
-        "Art/Craft (Acting)",
-        "Disguise",
-        "Fast Talk",
-        "Firearms (Handgun)",
-        "History",
-        "Intimidate",
-        "Law",
-        "Library Use",
-        "Listen",
-        "Psychology",
-        "Spot Hidden",
-        "Stealth",
-        "Track"
-      ]
-    },
-    {
-      "id": "doctor",
-      "name": "Doctor of Medicine",
-      "creditMin": 30,
-      "creditMax": 80,
-      "selectCount": 8,
-      "mandatorySkills": ["Credit Rating", "First Aid", "Medicine"],
-      "skillPool": [
-        "Biology",
-        "Charm",
-        "History",
-        "Language (Own)",
-        "Language (Other)",
-        "Library Use",
-        "Listen",
-        "Persuade",
-        "Psychology",
-        "Science (Any)"
-      ]
-    },
-    {
-      "id": "journalist",
-      "name": "Journalist",
-      "creditMin": 20,
-      "creditMax": 40,
-      "selectCount": 8,
-      "mandatorySkills": ["Credit Rating"],
-      "skillPool": [
-        "Art/Craft (Any)",
-        "Charm",
-        "Disguise",
-        "Fast Talk",
-        "History",
-        "Language (Own)",
-        "Language (Other)",
-        "Library Use",
-        "Listen",
-        "Photography",
-        "Psychology"
-      ]
-    }
-  ]
+    "version": 1,
+    "occupations": [
+        {
+            "id": "antiquarian",
+            "name": "Antiquarian",
+            "creditMin": 30,
+            "creditMax": 70,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Appraise",
+                "Art/Craft (Any)",
+                "History",
+                "Language (Own)",
+                "Language (Other)",
+                "Library Use",
+                "Listen",
+                "Persuade",
+                "Psychology",
+                "Spot Hidden"
+            ]
+        },
+        {
+            "id": "doctor",
+            "name": "Doctor of Medicine",
+            "creditMin": 30,
+            "creditMax": 80,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating",
+                "First Aid",
+                "Medicine"
+            ],
+            "skillPool": [
+                "Biology",
+                "Charm",
+                "History",
+                "Language (Own)",
+                "Language (Other)",
+                "Library Use",
+                "Listen",
+                "Persuade",
+                "Psychology",
+                "Science (Any)"
+            ]
+        },
+        {
+            "id": "journalist",
+            "name": "Journalist",
+            "creditMin": 20,
+            "creditMax": 40,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Art/Craft (Any)",
+                "Charm",
+                "Disguise",
+                "Fast Talk",
+                "History",
+                "Language (Own)",
+                "Language (Other)",
+                "Library Use",
+                "Listen",
+                "Photography",
+                "Psychology"
+            ]
+        },
+        {
+            "id": "author",
+            "name": "Author",
+            "creditMin": 9,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Art/Craft (Literature)",
+                "History",
+                "Library Use",
+                "Language (Own)",
+                "Language (Other)",
+                "Occult",
+                "Psychology",
+                "Any (personal/era specialty)"
+            ]
+        },
+        {
+            "id": "dilettante",
+            "name": "Dilettante",
+            "creditMin": 50,
+            "creditMax": 99,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Art/Craft (Any)",
+                "Firearms (Any)",
+                "Language (Other)",
+                "Ride",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade"
+            ]
+        },
+        {
+            "id": "archaeologist",
+            "name": "Archaeologist",
+            "creditMin": 10,
+            "creditMax": 40,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Appraise",
+                "Archaeology",
+                "History",
+                "Language (Other)",
+                "Library Use",
+                "Spot Hidden",
+                "Mechanical Repair",
+                "Navigate",
+                "Science (Any)"
+            ]
+        },
+        {
+            "id": "professor",
+            "name": "Professor",
+            "creditMin": 20,
+            "creditMax": 70,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Library Use",
+                "Language (Other)",
+                "Language (Own)",
+                "Psychology",
+                "History",
+                "Occult",
+                "Science (Any)",
+                "Any (academic specialty)"
+            ]
+        },
+        {
+            "id": "private_investigator",
+            "name": "Private Investigator",
+            "creditMin": 9,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Art/Craft (Photography)",
+                "Disguise",
+                "Law",
+                "Library Use",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Psychology",
+                "Spot Hidden",
+                "Locksmith"
+            ]
+        },
+        {
+            "id": "police_detective",
+            "name": "Police Detective",
+            "creditMin": 20,
+            "creditMax": 50,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Art/Craft (Acting)",
+                "Disguise",
+                "Fast Talk",
+                "Firearms (Handgun)",
+                "History",
+                "Intimidate",
+                "Law",
+                "Library Use",
+                "Listen",
+                "Psychology",
+                "Spot Hidden",
+                "Stealth",
+                "Track"
+            ]
+        },
+        {
+            "id": "engineer",
+            "name": "Engineer",
+            "creditMin": 30,
+            "creditMax": 60,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Electrical Repair",
+                "Mechanical Repair",
+                "Operate Heavy Machinery",
+                "Navigate",
+                "Science (Any)",
+                "Spot Hidden",
+                "Language (Own)",
+                "Language (Other)"
+            ]
+        },
+        {
+            "id": "entertainer",
+            "name": "Entertainer (Actor/Musician/Performer)",
+            "creditMin": 9,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Art/Craft (Acting)",
+                "Art/Craft (Music)",
+                "Charm",
+                "Disguise",
+                "Fast Talk",
+                "Psychology",
+                "Sleight of Hand",
+                "Jump"
+            ]
+        },
+        {
+            "id": "farmer",
+            "name": "Farmer",
+            "creditMin": 9,
+            "creditMax": 40,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Drive Auto",
+                "Electrical Repair",
+                "Mechanical Repair",
+                "Natural World",
+                "Operate Heavy Machinery",
+                "Science (Biology)",
+                "Spot Hidden",
+                "Track"
+            ]
+        },
+        {
+            "id": "gangster",
+            "name": "Gangster",
+            "creditMin": 5,
+            "creditMax": 65,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Fast Talk",
+                "Intimidate",
+                "Locksmith",
+                "Stealth",
+                "Fighting (Brawl)",
+                "Firearms (Handgun)",
+                "Drive Auto",
+                "Psychology"
+            ]
+        },
+        {
+            "id": "hobo",
+            "name": "Hobo",
+            "creditMin": 0,
+            "creditMax": 5,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Disguise",
+                "Fast Talk",
+                "Listen",
+                "Psychology",
+                "Sleight of Hand",
+                "Stealth",
+                "Survival",
+                "Track"
+            ]
+        },
+        {
+            "id": "lawyer",
+            "name": "Lawyer",
+            "creditMin": 30,
+            "creditMax": 80,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating",
+                "Law"
+            ],
+            "skillPool": [
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Language (Own)",
+                "Language (Other)",
+                "Library Use",
+                "Psychology"
+            ]
+        },
+        {
+            "id": "librarian",
+            "name": "Librarian",
+            "creditMin": 9,
+            "creditMax": 35,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Library Use",
+                "History",
+                "Language (Own)",
+                "Language (Other)",
+                "Occult",
+                "Psychology",
+                "Spot Hidden",
+                "Accounting"
+            ]
+        },
+        {
+            "id": "mechanic",
+            "name": "Mechanic",
+            "creditMin": 9,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Drive Auto",
+                "Electrical Repair",
+                "Mechanical Repair",
+                "Operate Heavy Machinery",
+                "Spot Hidden",
+                "Throw",
+                "Listen",
+                "Navigate"
+            ]
+        },
+        {
+            "id": "military_officer",
+            "name": "Military Officer",
+            "creditMin": 40,
+            "creditMax": 70,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Firearms (Any)",
+                "Dodge",
+                "First Aid",
+                "Intimidate",
+                "Navigate",
+                "Operate Heavy Machinery",
+                "Persuade",
+                "Survival"
+            ]
+        },
+        {
+            "id": "nurse",
+            "name": "Nurse",
+            "creditMin": 9,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating",
+                "First Aid",
+                "Medicine"
+            ],
+            "skillPool": [
+                "Biology",
+                "Listen",
+                "Psychology",
+                "Science (Chemistry)",
+                "Spot Hidden",
+                "Charm"
+            ]
+        },
+        {
+            "id": "occultist",
+            "name": "Occultist",
+            "creditMin": 9,
+            "creditMax": 40,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Anthropology",
+                "History",
+                "Language (Other)",
+                "Library Use",
+                "Occult",
+                "Psychology",
+                "Science (Astronomy)",
+                "Spot Hidden"
+            ]
+        },
+        {
+            "id": "pilot",
+            "name": "Pilot",
+            "creditMin": 20,
+            "creditMax": 70,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Electrical Repair",
+                "Mechanical Repair",
+                "Navigate",
+                "Pilot (Any)",
+                "Listen",
+                "Spot Hidden",
+                "Survival",
+                "First Aid"
+            ]
+        },
+        {
+            "id": "sailor",
+            "name": "Sailor",
+            "creditMin": 9,
+            "creditMax": 40,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Climb",
+                "Jump",
+                "Mechanical Repair",
+                "Navigate",
+                "Pilot (Boat)",
+                "Swim",
+                "Throw",
+                "Spot Hidden"
+            ]
+        },
+        {
+            "id": "salesperson",
+            "name": "Salesperson",
+            "creditMin": 9,
+            "creditMax": 40,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Appraise",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Language (Own)",
+                "Language (Other)",
+                "Listen",
+                "Psychology"
+            ]
+        },
+        {
+            "id": "scientist",
+            "name": "Scientist",
+            "creditMin": 9,
+            "creditMax": 70,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Library Use",
+                "Language (Own)",
+                "Language (Other)",
+                "Science (Any)",
+                "Mechanical Repair",
+                "Electrical Repair",
+                "Psychology",
+                "Spot Hidden"
+            ]
+        },
+        {
+            "id": "soldier",
+            "name": "Soldier",
+            "creditMin": 9,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Climb",
+                "Dodge",
+                "Fighting (Brawl)",
+                "Firearms (Rifle/Shotgun)",
+                "First Aid",
+                "Stealth",
+                "Survival",
+                "Other Language"
+            ]
+        },
+        {
+            "id": "accountant",
+            "name": "Accountant",
+            "creditMin": 30,
+            "creditMax": 70,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "Law",
+                "Library Use",
+                "Listen",
+                "Persuade",
+                "Spot Hidden",
+                "History",
+                "Appraise"
+            ]
+        },
+        {
+            "id": "acrobat",
+            "name": "Acrobat",
+            "creditMin": 9,
+            "creditMax": 20,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Climb",
+                "Dodge",
+                "Jump",
+                "Throw",
+                "Spot Hidden",
+                "Swim",
+                "Listen",
+                "First Aid"
+            ]
+        },
+        {
+            "id": "stage_actor",
+            "name": "Stage Actor",
+            "creditMin": 9,
+            "creditMax": 40,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Art/Craft (Acting)",
+                "Disguise",
+                "Fighting (Brawl)",
+                "History",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Psychology",
+                "Spot Hidden"
+            ]
+        },
+        {
+            "id": "film_star",
+            "name": "Film Star",
+            "creditMin": 20,
+            "creditMax": 90,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Art/Craft (Acting)",
+                "Disguise",
+                "Drive Auto",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Psychology",
+                "Ride",
+                "Fighting (Brawl)"
+            ]
+        },
+        {
+            "id": "agency_detective",
+            "name": "Agency Detective",
+            "creditMin": 20,
+            "creditMax": 45,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Fighting (Brawl)",
+                "Firearms (Handgun)",
+                "Law",
+                "Library Use",
+                "Psychology",
+                "Stealth",
+                "Track"
+            ]
+        },
+        {
+            "id": "alienist",
+            "name": "Alienist",
+            "creditMin": 10,
+            "creditMax": 60,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Law",
+                "Listen",
+                "Medicine",
+                "Language (Other)",
+                "Psychoanalysis",
+                "Psychology",
+                "Science (Biology)",
+                "Science (Chemistry)"
+            ]
+        },
+        {
+            "id": "animal_trainer",
+            "name": "Animal Trainer",
+            "creditMin": 10,
+            "creditMax": 40,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Jump",
+                "Listen",
+                "Natural World",
+                "Psychology",
+                "Science (Zoology)",
+                "Stealth",
+                "Track",
+                "Ride"
+            ]
+        },
+        {
+            "id": "antique_dealer",
+            "name": "Antique Dealer",
+            "creditMin": 30,
+            "creditMax": 50,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "Appraise",
+                "Drive Auto",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "History",
+                "Library Use",
+                "Navigate",
+                "Spot Hidden"
+            ]
+        },
+        {
+            "id": "architect",
+            "name": "Architect",
+            "creditMin": 30,
+            "creditMax": 70,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "Art/Craft (Technical Drawing)",
+                "Law",
+                "Language (Own)",
+                "Mechanical Repair",
+                "Library Use",
+                "Persuade",
+                "Psychology",
+                "Science (Mathematics)"
+            ]
+        },
+        {
+            "id": "artist_ih",
+            "name": "Artist",
+            "creditMin": 9,
+            "creditMax": 50,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Art/Craft (Any)",
+                "History",
+                "Natural World",
+                "Charm",
+                "Language (Other)",
+                "Psychology",
+                "Spot Hidden",
+                "Appraise"
+            ]
+        },
+        {
+            "id": "asylum_attendant",
+            "name": "Asylum Attendant",
+            "creditMin": 8,
+            "creditMax": 20,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Dodge",
+                "Fighting (Brawl)",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "First Aid",
+                "Listen",
+                "Psychology",
+                "Stealth"
+            ]
+        },
+        {
+            "id": "athlete_ih",
+            "name": "Athlete",
+            "creditMin": 9,
+            "creditMax": 70,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Climb",
+                "Jump",
+                "Fighting (Brawl)",
+                "Ride",
+                "Charm",
+                "Swim",
+                "Throw",
+                "First Aid"
+            ]
+        },
+        {
+            "id": "bartender",
+            "name": "Bartender",
+            "creditMin": 8,
+            "creditMax": 25,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Fighting (Brawl)",
+                "Listen",
+                "Psychology",
+                "Spot Hidden"
+            ]
+        },
+        {
+            "id": "big_game_hunter",
+            "name": "Big Game Hunter",
+            "creditMin": 20,
+            "creditMax": 50,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Firearms (Rifle/Shotgun)",
+                "Listen",
+                "Spot Hidden",
+                "Natural World",
+                "Navigate",
+                "Language (Other)",
+                "Survival",
+                "Science (Biology)",
+                "Science (Botany)",
+                "Stealth",
+                "Track"
+            ]
+        },
+        {
+            "id": "book_dealer",
+            "name": "Book Dealer",
+            "creditMin": 20,
+            "creditMax": 40,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "Appraise",
+                "Drive Auto",
+                "History",
+                "Library Use",
+                "Language (Own)",
+                "Language (Other)",
+                "Charm"
+            ]
+        },
+        {
+            "id": "bounty_hunter",
+            "name": "Bounty Hunter",
+            "creditMin": 9,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Drive Auto",
+                "Electrical Repair",
+                "Fighting (Brawl)",
+                "Firearms (Handgun)",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Law",
+                "Psychology",
+                "Track",
+                "Stealth"
+            ]
+        },
+        {
+            "id": "boxer_wrestler",
+            "name": "Boxer/Wrestler",
+            "creditMin": 9,
+            "creditMax": 60,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Dodge",
+                "Fighting (Brawl)",
+                "Intimidate",
+                "Jump",
+                "Psychology",
+                "Spot Hidden",
+                "First Aid",
+                "Climb"
+            ]
+        },
+        {
+            "id": "butler_valet_maid",
+            "name": "Butler/Valet/Maid",
+            "creditMin": 9,
+            "creditMax": 40,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "Appraise",
+                "Art/Craft (Any)",
+                "First Aid",
+                "Listen",
+                "Language (Other)",
+                "Psychology",
+                "Spot Hidden"
+            ]
+        },
+        {
+            "id": "clergy_member",
+            "name": "Clergy, Member of the",
+            "creditMin": 9,
+            "creditMax": 60,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "History",
+                "Library Use",
+                "Listen",
+                "Language (Other)",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Psychology"
+            ]
+        },
+        {
+            "id": "cowboy",
+            "name": "Cowboy/girl",
+            "creditMin": 9,
+            "creditMax": 20,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Dodge",
+                "Fighting (Brawl)",
+                "Firearms (Rifle/Shotgun)",
+                "First Aid",
+                "Natural World",
+                "Jump",
+                "Ride",
+                "Survival",
+                "Throw",
+                "Track"
+            ]
+        },
+        {
+            "id": "craftsperson",
+            "name": "Craftsperson",
+            "creditMin": 10,
+            "creditMax": 40,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "Art/Craft (Any)",
+                "Art/Craft (Any)",
+                "Mechanical Repair",
+                "Natural World",
+                "Spot Hidden",
+                "Appraise",
+                "Operate Heavy Machinery"
+            ]
+        },
+        {
+            "id": "assassin",
+            "name": "Assassin",
+            "creditMin": 30,
+            "creditMax": 60,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Disguise",
+                "Electrical Repair",
+                "Fighting (Brawl)",
+                "Firearms (Handgun)",
+                "Locksmith",
+                "Mechanical Repair",
+                "Stealth",
+                "Psychology"
+            ]
+        },
+        {
+            "id": "bank_robber",
+            "name": "Bank Robber",
+            "creditMin": 5,
+            "creditMax": 75,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Drive Auto",
+                "Electrical Repair",
+                "Mechanical Repair",
+                "Fighting (Brawl)",
+                "Firearms (Handgun)",
+                "Intimidate",
+                "Locksmith",
+                "Operate Heavy Machinery"
+            ]
+        },
+        {
+            "id": "bootlegger_thug",
+            "name": "Bootlegger/Thug",
+            "creditMin": 5,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Drive Auto",
+                "Fighting (Brawl)",
+                "Firearms (Handgun)",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Psychology",
+                "Stealth",
+                "Spot Hidden"
+            ]
+        },
+        {
+            "id": "burglar",
+            "name": "Burglar",
+            "creditMin": 5,
+            "creditMax": 40,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Appraise",
+                "Climb",
+                "Electrical Repair",
+                "Mechanical Repair",
+                "Listen",
+                "Locksmith",
+                "Sleight of Hand",
+                "Stealth",
+                "Spot Hidden"
+            ]
+        },
+        {
+            "id": "conman",
+            "name": "Conman",
+            "creditMin": 10,
+            "creditMax": 65,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Appraise",
+                "Art/Craft (Acting)",
+                "Law",
+                "Language (Other)",
+                "Listen",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Psychology",
+                "Sleight of Hand"
+            ]
+        },
+        {
+            "id": "criminal_freelance",
+            "name": "Criminal (freelance/solo)",
+            "creditMin": 5,
+            "creditMax": 65,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Art/Craft (Acting)",
+                "Disguise",
+                "Appraise",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Fighting (Brawl)",
+                "Firearms (Handgun)",
+                "Locksmith",
+                "Mechanical Repair",
+                "Stealth",
+                "Psychology",
+                "Spot Hidden"
+            ]
+        },
+        {
+            "id": "gun_moll",
+            "name": "Gun Moll",
+            "creditMin": 10,
+            "creditMax": 80,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Art/Craft (Any)",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Fighting (Brawl)",
+                "Firearms (Handgun)",
+                "Drive Auto",
+                "Listen",
+                "Stealth"
+            ]
+        },
+        {
+            "id": "fence",
+            "name": "Fence",
+            "creditMin": 20,
+            "creditMax": 40,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "Appraise",
+                "Art/Craft (Forgery)",
+                "History",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Library Use",
+                "Spot Hidden"
+            ]
+        },
+        {
+            "id": "forger",
+            "name": "Forger/Counterfeiter",
+            "creditMin": 20,
+            "creditMax": 60,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "Appraise",
+                "Art/Craft (Forgery)",
+                "History",
+                "Library Use",
+                "Spot Hidden",
+                "Sleight of Hand",
+                "Computer Use"
+            ]
+        },
+        {
+            "id": "smuggler",
+            "name": "Smuggler",
+            "creditMin": 20,
+            "creditMax": 60,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Firearms (Rifle/Shotgun)",
+                "Listen",
+                "Navigate",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Drive Auto",
+                "Pilot (Aircraft)",
+                "Pilot (Boat)",
+                "Psychology",
+                "Sleight of Hand",
+                "Spot Hidden"
+            ]
+        },
+        {
+            "id": "street_punk",
+            "name": "Street Punk",
+            "creditMin": 3,
+            "creditMax": 10,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Climb",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Fighting (Brawl)",
+                "Firearms (Handgun)",
+                "Jump",
+                "Sleight of Hand",
+                "Stealth",
+                "Throw"
+            ]
+        },
+        {
+            "id": "cult_leader",
+            "name": "Cult Leader",
+            "creditMin": 30,
+            "creditMax": 60,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Occult",
+                "Psychology",
+                "Spot Hidden",
+                "History"
+            ]
+        },
+        {
+            "id": "designer",
+            "name": "Designer",
+            "creditMin": 20,
+            "creditMax": 60,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "Art/Craft (Photography)",
+                "Art/Craft (Any)",
+                "Art/Craft (Technical Drawing)",
+                "Library Use",
+                "Mechanical Repair",
+                "Psychology",
+                "Spot Hidden"
+            ]
+        },
+        {
+            "id": "diver",
+            "name": "Diver",
+            "creditMin": 9,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Diving",
+                "First Aid",
+                "Mechanical Repair",
+                "Pilot (Boat)",
+                "Science (Biology)",
+                "Spot Hidden",
+                "Swim",
+                "Navigate"
+            ]
+        },
+        {
+            "id": "drifter",
+            "name": "Drifter",
+            "creditMin": 0,
+            "creditMax": 5,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Climb",
+                "Jump",
+                "Listen",
+                "Navigate",
+                "Charm",
+                "Stealth",
+                "Survival"
+            ]
+        },
+        {
+            "id": "chauffeur",
+            "name": "Chauffeur",
+            "creditMin": 10,
+            "creditMax": 40,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Drive Auto",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Listen",
+                "Mechanical Repair",
+                "Navigate",
+                "Spot Hidden"
+            ]
+        },
+        {
+            "id": "driver",
+            "name": "Driver",
+            "creditMin": 9,
+            "creditMax": 20,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "Drive Auto",
+                "Listen",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Mechanical Repair",
+                "Navigate",
+                "Psychology"
+            ]
+        },
+        {
+            "id": "taxi_driver",
+            "name": "Taxi Driver",
+            "creditMin": 9,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "Drive Auto",
+                "Electrical Repair",
+                "Fast Talk",
+                "Mechanical Repair",
+                "Navigate",
+                "Spot Hidden",
+                "Listen"
+            ]
+        },
+        {
+            "id": "editor",
+            "name": "Editor",
+            "creditMin": 10,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "History",
+                "Language (Own)",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Psychology",
+                "Spot Hidden"
+            ]
+        },
+        {
+            "id": "elected_official",
+            "name": "Elected Official",
+            "creditMin": 50,
+            "creditMax": 90,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Charm",
+                "History",
+                "Intimidate",
+                "Fast Talk",
+                "Listen",
+                "Language (Own)",
+                "Persuade",
+                "Psychology"
+            ]
+        },
+        {
+            "id": "explorer",
+            "name": "Explorer",
+            "creditMin": 55,
+            "creditMax": 80,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Climb",
+                "Swim",
+                "Firearms (Rifle/Shotgun)",
+                "History",
+                "Jump",
+                "Natural World",
+                "Navigate",
+                "Language (Other)",
+                "Survival"
+            ]
+        },
+        {
+            "id": "federal_agent",
+            "name": "Federal Agent",
+            "creditMin": 20,
+            "creditMax": 40,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Drive Auto",
+                "Fighting (Brawl)",
+                "Firearms (Handgun)",
+                "Law",
+                "Persuade",
+                "Stealth",
+                "Spot Hidden",
+                "Psychology"
+            ]
+        },
+        {
+            "id": "firefighter",
+            "name": "Firefighter",
+            "creditMin": 9,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Climb",
+                "Dodge",
+                "Drive Auto",
+                "First Aid",
+                "Jump",
+                "Mechanical Repair",
+                "Operate Heavy Machinery",
+                "Throw"
+            ]
+        },
+        {
+            "id": "foreign_correspondent",
+            "name": "Foreign Correspondent",
+            "creditMin": 10,
+            "creditMax": 40,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "History",
+                "Language (Other)",
+                "Language (Own)",
+                "Listen",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Psychology"
+            ]
+        },
+        {
+            "id": "forensic_surgeon",
+            "name": "Forensic Surgeon",
+            "creditMin": 40,
+            "creditMax": 60,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Language (Other)",
+                "Library Use",
+                "Medicine",
+                "Persuade",
+                "Science (Biology)",
+                "Science (Forensics)",
+                "Science (Pharmacy)",
+                "Spot Hidden"
+            ]
+        },
+        {
+            "id": "gambler",
+            "name": "Gambler",
+            "creditMin": 8,
+            "creditMax": 50,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "Art/Craft (Acting)",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Listen",
+                "Psychology",
+                "Sleight of Hand",
+                "Spot Hidden"
+            ]
+        },
+        {
+            "id": "gangster_boss",
+            "name": "Gangster Boss",
+            "creditMin": 60,
+            "creditMax": 95,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Fighting (Brawl)",
+                "Firearms (Handgun)",
+                "Law",
+                "Listen",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Psychology",
+                "Spot Hidden"
+            ]
+        },
+        {
+            "id": "gangster_underling",
+            "name": "Gangster Underling",
+            "creditMin": 9,
+            "creditMax": 20,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Drive Auto",
+                "Fighting (Brawl)",
+                "Firearms (Handgun)",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Psychology",
+                "Stealth"
+            ]
+        },
+        {
+            "id": "gentleman_lady",
+            "name": "Gentleman/Lady",
+            "creditMin": 40,
+            "creditMax": 90,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Art/Craft (Any)",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Firearms (Rifle/Shotgun)",
+                "History",
+                "Language (Other)",
+                "Navigate",
+                "Ride"
+            ]
+        },
+        {
+            "id": "hospital_orderly",
+            "name": "Hospital Orderly",
+            "creditMin": 6,
+            "creditMax": 15,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Electrical Repair",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Fighting (Brawl)",
+                "First Aid",
+                "Listen",
+                "Mechanical Repair",
+                "Psychology",
+                "Stealth"
+            ]
+        },
+        {
+            "id": "investigative_journalist",
+            "name": "Investigative Journalist",
+            "creditMin": 9,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Art/Craft (Art)",
+                "Art/Craft (Photography)",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "History",
+                "Library Use",
+                "Language (Own)",
+                "Psychology"
+            ]
+        },
+        {
+            "id": "reporter",
+            "name": "Reporter",
+            "creditMin": 9,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Art/Craft (Acting)",
+                "History",
+                "Listen",
+                "Language (Own)",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Psychology",
+                "Stealth",
+                "Spot Hidden"
+            ]
+        },
+        {
+            "id": "judge",
+            "name": "Judge",
+            "creditMin": 50,
+            "creditMax": 80,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "History",
+                "Intimidate",
+                "Law",
+                "Library Use",
+                "Listen",
+                "Language (Own)",
+                "Persuade",
+                "Psychology"
+            ]
+        },
+        {
+            "id": "laboratory_assistant",
+            "name": "Laboratory Assistant",
+            "creditMin": 10,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Mechanical Repair",
+                "Library Use",
+                "Electrical Repair",
+                "Language (Other)",
+                "Science (Chemistry)",
+                "Science (Biology)",
+                "Science (Physics)",
+                "Spot Hidden"
+            ]
+        },
+        {
+            "id": "laborer_unskilled",
+            "name": "Laborer, Unskilled",
+            "creditMin": 9,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Drive Auto",
+                "Electrical Repair",
+                "Fighting (Brawl)",
+                "First Aid",
+                "Mechanical Repair",
+                "Operate Heavy Machinery",
+                "Throw",
+                "Climb"
+            ]
+        },
+        {
+            "id": "lumberjack",
+            "name": "Lumberjack",
+            "creditMin": 9,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Climb",
+                "Dodge",
+                "Fighting (Chainsaw)",
+                "First Aid",
+                "Jump",
+                "Mechanical Repair",
+                "Natural World",
+                "Science (Biology)",
+                "Science (Botany)",
+                "Throw"
+            ]
+        },
+        {
+            "id": "miner",
+            "name": "Miner",
+            "creditMin": 9,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Climb",
+                "Science (Geology)",
+                "Jump",
+                "Mechanical Repair",
+                "Operate Heavy Machinery",
+                "Stealth",
+                "Spot Hidden",
+                "First Aid"
+            ]
+        },
+        {
+            "id": "mechanic_skilled_trades",
+            "name": "Mechanic (and Skilled Trades)",
+            "creditMin": 9,
+            "creditMax": 40,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Art/Craft (Carpentry)",
+                "Art/Craft (Welding)",
+                "Art/Craft (Plumbing)",
+                "Climb",
+                "Drive Auto",
+                "Electrical Repair",
+                "Mechanical Repair",
+                "Operate Heavy Machinery"
+            ]
+        },
+        {
+            "id": "missionary",
+            "name": "Missionary",
+            "creditMin": 0,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Art/Craft (Any)",
+                "First Aid",
+                "Mechanical Repair",
+                "Medicine",
+                "Natural World",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade"
+            ]
+        },
+        {
+            "id": "mountain_climber",
+            "name": "Mountain Climber",
+            "creditMin": 30,
+            "creditMax": 60,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Climb",
+                "First Aid",
+                "Jump",
+                "Listen",
+                "Navigate",
+                "Language (Other)",
+                "Survival",
+                "Track"
+            ]
+        },
+        {
+            "id": "museum_curator",
+            "name": "Museum Curator",
+            "creditMin": 10,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "Appraise",
+                "Archaeology",
+                "History",
+                "Library Use",
+                "Occult",
+                "Language (Other)",
+                "Spot Hidden"
+            ]
+        },
+        {
+            "id": "musician",
+            "name": "Musician",
+            "creditMin": 9,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Art/Craft (Instrument)",
+                "Charm",
+                "Listen",
+                "Psychology",
+                "Spot Hidden",
+                "History",
+                "Art/Craft (Composition)",
+                "Art/Craft (Performance)"
+            ]
+        },
+        {
+            "id": "outdoorsman",
+            "name": "Outdoorsman/woman",
+            "creditMin": 5,
+            "creditMax": 20,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Firearms (Rifle/Shotgun)",
+                "First Aid",
+                "Listen",
+                "Natural World",
+                "Navigate",
+                "Spot Hidden",
+                "Survival",
+                "Track"
+            ]
+        },
+        {
+            "id": "parapsychologist",
+            "name": "Parapsychologist",
+            "creditMin": 9,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Anthropology",
+                "Art/Craft (Photography)",
+                "History",
+                "Library Use",
+                "Occult",
+                "Language (Other)",
+                "Psychology",
+                "Science (Physics)"
+            ]
+        },
+        {
+            "id": "pharmacist",
+            "name": "Pharmacist",
+            "creditMin": 35,
+            "creditMax": 75,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "First Aid",
+                "Language (Other)",
+                "Library Use",
+                "Charm",
+                "Psychology",
+                "Science (Pharmacy)",
+                "Science (Chemistry)"
+            ]
+        },
+        {
+            "id": "photographer",
+            "name": "Photographer",
+            "creditMin": 9,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Art/Craft (Photography)",
+                "Charm",
+                "Psychology",
+                "Science (Chemistry)",
+                "Stealth",
+                "Spot Hidden",
+                "Drive Auto",
+                "History"
+            ]
+        },
+        {
+            "id": "photojournalist",
+            "name": "Photojournalist",
+            "creditMin": 10,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Art/Craft (Photography)",
+                "Climb",
+                "Charm",
+                "Language (Other)",
+                "Psychology",
+                "Science (Chemistry)",
+                "Drive Auto",
+                "Stealth"
+            ]
+        },
+        {
+            "id": "aviator",
+            "name": "Aviator",
+            "creditMin": 30,
+            "creditMax": 60,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "Electrical Repair",
+                "Listen",
+                "Mechanical Repair",
+                "Navigate",
+                "Pilot (Aircraft)",
+                "Spot Hidden",
+                "Drive Auto"
+            ]
+        },
+        {
+            "id": "prospector",
+            "name": "Prospector",
+            "creditMin": 0,
+            "creditMax": 10,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Climb",
+                "First Aid",
+                "History",
+                "Mechanical Repair",
+                "Navigate",
+                "Science (Geology)",
+                "Spot Hidden",
+                "Track"
+            ]
+        },
+        {
+            "id": "prostitute",
+            "name": "Prostitute",
+            "creditMin": 5,
+            "creditMax": 50,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Art/Craft (Any)",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Dodge",
+                "Psychology",
+                "Sleight of Hand",
+                "Stealth"
+            ]
+        },
+        {
+            "id": "psychiatrist",
+            "name": "Psychiatrist",
+            "creditMin": 30,
+            "creditMax": 80,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Language (Other)",
+                "Listen",
+                "Medicine",
+                "Persuade",
+                "Psychoanalysis",
+                "Psychology",
+                "Science (Biology)",
+                "Science (Chemistry)"
+            ]
+        },
+        {
+            "id": "psychologist",
+            "name": "Psychologist/Psychoanalyst",
+            "creditMin": 10,
+            "creditMax": 40,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "Library Use",
+                "Listen",
+                "Persuade",
+                "Psychoanalysis",
+                "Psychology",
+                "History",
+                "Science (Biology)"
+            ]
+        },
+        {
+            "id": "researcher",
+            "name": "Researcher",
+            "creditMin": 9,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "History",
+                "Library Use",
+                "Charm",
+                "Language (Other)",
+                "Spot Hidden",
+                "Science (Astronomy)",
+                "Science (Physics)",
+                "Science (Chemistry)"
+            ]
+        },
+        {
+            "id": "sailor_naval",
+            "name": "Sailor, Naval",
+            "creditMin": 9,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Electrical Repair",
+                "Mechanical Repair",
+                "Fighting (Brawl)",
+                "Firearms (Rifle/Shotgun)",
+                "First Aid",
+                "Navigate",
+                "Pilot (Boat)",
+                "Survival",
+                "Swim"
+            ]
+        },
+        {
+            "id": "sailor_commercial",
+            "name": "Sailor, Commercial",
+            "creditMin": 20,
+            "creditMax": 40,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "First Aid",
+                "Mechanical Repair",
+                "Natural World",
+                "Navigate",
+                "Charm",
+                "Pilot (Boat)",
+                "Spot Hidden",
+                "Swim"
+            ]
+        },
+        {
+            "id": "secretary",
+            "name": "Secretary",
+            "creditMin": 9,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "Art/Craft (Typing)",
+                "Art/Craft (Short Hand)",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Language (Own)",
+                "Library Use",
+                "Psychology"
+            ]
+        },
+        {
+            "id": "shopkeeper",
+            "name": "Shopkeeper",
+            "creditMin": 20,
+            "creditMax": 40,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Electrical Repair",
+                "Listen",
+                "Mechanical Repair",
+                "Psychology",
+                "Spot Hidden"
+            ]
+        },
+        {
+            "id": "soldier_marine",
+            "name": "Soldier/Marine",
+            "creditMin": 9,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Climb",
+                "Swim",
+                "Dodge",
+                "Fighting (Brawl)",
+                "Firearms (Rifle/Shotgun)",
+                "Stealth",
+                "Survival",
+                "First Aid",
+                "Mechanical Repair",
+                "Language (Other)"
+            ]
+        },
+        {
+            "id": "spy",
+            "name": "Spy",
+            "creditMin": 20,
+            "creditMax": 60,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Art/Craft (Acting)",
+                "Disguise",
+                "Firearms (Handgun)",
+                "Listen",
+                "Language (Other)",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Psychology",
+                "Sleight of Hand",
+                "Stealth"
+            ]
+        },
+        {
+            "id": "student_intern",
+            "name": "Student/Intern",
+            "creditMin": 5,
+            "creditMax": 10,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Language (Own)",
+                "Language (Other)",
+                "Library Use",
+                "Listen",
+                "History",
+                "Science (Any)",
+                "Spot Hidden",
+                "Psychology"
+            ]
+        },
+        {
+            "id": "stuntman",
+            "name": "Stuntman",
+            "creditMin": 10,
+            "creditMax": 50,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Climb",
+                "Dodge",
+                "Electrical Repair",
+                "Mechanical Repair",
+                "Fighting (Brawl)",
+                "First Aid",
+                "Jump",
+                "Swim",
+                "Diving",
+                "Drive Auto",
+                "Pilot (Aircraft)",
+                "Ride"
+            ]
+        },
+        {
+            "id": "tribe_member",
+            "name": "Tribe Member",
+            "creditMin": 0,
+            "creditMax": 15,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Climb",
+                "Fighting (Brawl)",
+                "Throw",
+                "Listen",
+                "Natural World",
+                "Occult",
+                "Spot Hidden",
+                "Swim",
+                "Survival"
+            ]
+        },
+        {
+            "id": "undertaker",
+            "name": "Undertaker",
+            "creditMin": 20,
+            "creditMax": 40,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "Drive Auto",
+                "Charm",
+                "History",
+                "Occult",
+                "Psychology",
+                "Science (Biology)",
+                "Science (Chemistry)",
+                "Library Use"
+            ]
+        },
+        {
+            "id": "union_activist",
+            "name": "Union Activist",
+            "creditMin": 5,
+            "creditMax": 30,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Fighting (Brawl)",
+                "Law",
+                "Listen",
+                "Operate Heavy Machinery",
+                "Psychology"
+            ]
+        },
+        {
+            "id": "waiter_waitress",
+            "name": "Waitress/Waiter",
+            "creditMin": 9,
+            "creditMax": 20,
+            "selectCount": 8,
+            "mandatorySkills": [
+                "Credit Rating"
+            ],
+            "skillPool": [
+                "Accounting",
+                "Art/Craft (Any)",
+                "Dodge",
+                "Listen",
+                "Charm",
+                "Fast Talk",
+                "Intimidate",
+                "Persuade",
+                "Psychology"
+            ]
+        }
+    ]
 }

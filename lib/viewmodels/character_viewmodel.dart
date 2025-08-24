@@ -25,7 +25,6 @@ class CharacterViewModel extends ChangeNotifier {
 
   Character? _character;
   CreationRuleSet? _rules;
-  Set<String>? _seededOccupationSkills;
 
   /// Emits the latest creation-time update (accepted/partial/rejected).
   /// UI can listen to this to show inline messages and snap inputs back.
@@ -199,32 +198,14 @@ class CharacterViewModel extends ChangeNotifier {
     await saveCharacter();
   }
 
-  /// Expanded occupation check:
-  /// - If [name] is a specialization "Family (Spec)", treat it as occupational if
-  ///   either the exact name OR its family is allowed by the rules.
-  /// - Falls back to the rules' own check and previously seeded picks.
+  /// Returns true if a skill with this exact display name exists
+  /// and is marked as an occupation skill.
   bool isOccupationSkill(String name) {
-    // Prefer pre-seeded set if present (mandatory + user picks)
-    final chosen = _seededOccupationSkills;
-    if (chosen != null && chosen.contains(name)) {
-      return true;
-    }
-
-    // Parse specialization; if a family is present, check family as a wildcard.
-    final parsed = SkillSpecialization.parse(name);
-    final fam = parsed.category;
-
-    // Rules may know exact names; check both exact and family.
-    final byRulesExact = _rules?.isOccupationSkill(name) ?? false;
-    if (byRulesExact) return true;
-
-    if (fam != null) {
-      final byRulesFamily = _rules?.isOccupationSkill(fam) ?? false;
-      if (byRulesFamily) return true;
-    }
-
-    // Finally, fall back to rules on the given name as before
-    return _rules?.isOccupationSkill(name) ?? false;
+    final c = _character;
+    if (c == null) return false;
+    final idx = c.skills.indexWhere((s) => s.name == name);
+    if (idx < 0) return false;
+    return c.skills[idx].isOccupation;
   }
 
   @override
@@ -289,7 +270,6 @@ class CharacterViewModel extends ChangeNotifier {
     );
 
     // Seed for UX badges in the sheet (mandatory + user picks from pre-sheet).
-    _seededOccupationSkills = spec.selectedSkills.toSet();
     // Tell the rules about the chosen occupation skills and initial pools
     _rules?.seedOccupationSkills(spec.selectedSkills.toSet());
     _rules?.seedPools(
@@ -325,7 +305,6 @@ class CharacterViewModel extends ChangeNotifier {
             sheetName: c.sheetName, name: initName, occupation: initOccupation);
       }
       _rules = rs;
-      _seededOccupationSkills = null;
     }
 
     notifyListeners();
@@ -345,7 +324,6 @@ class CharacterViewModel extends ChangeNotifier {
     _rules?.onExit();
     _rules = null;
     _character = null;
-     _seededOccupationSkills = null;
     notifyListeners();
   }
 
@@ -378,7 +356,6 @@ class CharacterViewModel extends ChangeNotifier {
     // Clean up rule-set binding.
     _rules?.onExit();
     _rules = null;
-    _seededOccupationSkills = null;
 
     await saveCharacter(); // persist the status change so the List can see it
 
@@ -674,6 +651,74 @@ class CharacterViewModel extends ChangeNotifier {
     // Sort for stable UI, then assign.
     skillsList.sort((a, b) => a.name.compareTo(b.name));
     c.skills = skillsList;
+
+    // --- Mark occupation skills and add specialized ones if needed ---
+    for (final raw in selectedOccupationSkills) {
+      final parsed = SkillSpecialization.parse(raw);
+      final family = parsed.category;
+      final spec = parsed.specialization;
+
+      if (family != null && spec != null) {
+        // Specialized skill selected (e.g., "Science (Biology)")
+        // 1) Ensure the generic family exists (locked, base set from rules)
+        final genericIndex = c.skills.indexWhere((s) => s.name == family);
+        if (genericIndex < 0) {
+          c.skills.add(Skill(
+            name: family,
+            base: SkillBases.baseForGeneric(family),
+            canUpgrade: false,
+            category: family,
+            specialization: null,
+          ));
+        }
+
+        // 2) Ensure the specialized skill exists
+        final display = SkillSpecialization.displayName(family, spec);
+        var idx = c.skills.indexWhere((s) => s.name == display);
+        if (idx < 0) {
+          c.skills.add(Skill(
+            name: display,
+            base: SkillBases.baseForSpecialized(family, spec),
+            canUpgrade: true,
+            category: family,
+            specialization: spec,
+          ));
+          idx = c.skills.length - 1;
+        }
+
+        // 3) Mark specialized skill as occupational
+        c.skills[idx].isOccupation = true;
+      } else {
+        // Non-specialized (plain) skill selected
+        final idx = c.skills.indexWhere((s) => s.name == raw);
+        if (idx >= 0) {
+          c.skills[idx].isOccupation = true;
+        } else {
+          // If it wasn't in baseSkills, add it now with its generic base.
+          c.skills.add(Skill(
+            name: raw,
+            base: SkillBases.baseForGeneric(raw),
+            canUpgrade: true,
+          ));
+          c.skills.last.isOccupation = true;
+        }
+      }
+    }
+
+    // Keep list ordered: family -> generic -> specializations -> name A→Z
+    c.skills.sort((a, b) {
+      final aCat = a.category ?? a.name;
+      final bCat = b.category ?? b.name;
+
+      final catCmp = aCat.compareTo(bCat);
+      if (catCmp != 0) return catCmp;
+
+      final aIsGen = a.specialization == null;
+      final bIsGen = b.specialization == null;
+      if (aIsGen != bIsGen) return aIsGen ? -1 : 1;
+
+      return a.displayName.compareTo(b.displayName);
+    });
 
     c.startingSanity = sanity;
     // Clamp currentSanity to computed maxSanity (uses Mythos in skills)
