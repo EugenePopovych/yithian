@@ -7,6 +7,13 @@ import 'package:coc_sheet/models/classic_rules.dart' show AttrKey;
 import 'package:coc_sheet/services/occupation_storage_json.dart';
 import 'package:coc_sheet/viewmodels/create_character_view_model.dart';
 
+const double kOccupationListHeight = 260;
+
+bool _skillNeedsSpecialization(String s) {
+  final ls = s.toLowerCase();
+  return ls.contains('(any)') || ls.contains('(other)');
+}
+
 class CreateCharacterScreen extends StatefulWidget {
   const CreateCharacterScreen({
     super.key,
@@ -77,6 +84,7 @@ class _CreateCharacterScreenState extends State<CreateCharacterScreen> {
     }
   }
 
+
   @override
   void dispose() {
     _nameCtrl.dispose();
@@ -92,7 +100,20 @@ class _CreateCharacterScreenState extends State<CreateCharacterScreen> {
       attributes: vm.attributes,
       luck: vm.luck,
       occupationId: occ.id,
-      selectedSkills: vm.selectedSkills.toList()..sort(),
+      selectedSkills: vm.selectedSkills.map((s) {
+        if (_skillNeedsSpecialization(s)) {
+          final spec = _Body._specCtrls[s]?.text.trim();
+          if (spec != null && spec.isNotEmpty) {
+            // Replace "(Any)" or "(Other)" with the chosen specialization
+            return s.replaceAll(
+              RegExp(r'\((Any|Other)\)', caseSensitive: false),
+              '($spec)',
+            );
+          }
+        }
+        return s;
+      }).toList()
+        ..sort(),
     );
 
     if (widget.onCreate != null) {
@@ -161,10 +182,25 @@ class _Body extends StatelessWidget {
   final ValueChanged<String> onFilterChanged;
   final VoidCallback onCreate;
 
+  // Controllers for specialization inputs keyed by base skill (e.g., 'Art/Craft (Any)').
+  static final Map<String, TextEditingController> _specCtrls = {};
+
+  TextEditingController _ctrlFor(String skill) {
+    return _specCtrls.putIfAbsent(skill, () => TextEditingController());
+  }
+
+  /// Returns selected skills that require a non-empty specialization but don't have it yet.
+  List<String> _missingSpecs(Set<String> selected) {
+    return selected
+        .where(_skillNeedsSpecialization)
+        .where((s) => _ctrlFor(s).text.trim().isEmpty)
+        .toList(growable: false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isReady = vm.isReadyToCreate;
+    final isReady = vm.isReadyToCreate && _missingSpecs(vm.selectedSkills).isEmpty;
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -249,11 +285,14 @@ class _Body extends StatelessWidget {
 
           // Skills multi-select (after occupation chosen)
           if (vm.occupation != null) ...[
-            _OccupationSkills(
-              vm: vm,
-              occupation: vm.occupation!,
-              selected: vm.selectedSkills,
-              onChanged: vm.setOccupationSkills,
+            _SpecScope(
+              map: _Body._specCtrls,
+              child: _OccupationSkills(
+                vm: vm,
+                occupation: vm.occupation!,
+                selected: vm.selectedSkills,
+                onChanged: vm.setOccupationSkills,
+              ),
             ),
             const SizedBox(height: 24),
           ],
@@ -410,12 +449,13 @@ class _OccupationPickerState extends State<_OccupationPicker> {
           ))
         else
           Container(
-            height: 200,
+            height: kOccupationListHeight,
             decoration: BoxDecoration(
               border: Border.all(color: Theme.of(context).dividerColor),
               borderRadius: BorderRadius.circular(12),
             ),
             child: ListView.builder(
+              primary: false,
               itemCount: widget.occupations.length,
               itemBuilder: (context, i) {
                 final o = widget.occupations[i];
@@ -423,7 +463,20 @@ class _OccupationPickerState extends State<_OccupationPicker> {
                   value: o,
                   groupValue: sel,
                   title: Text(o.name),
-                  subtitle: Text('CR ${o.creditMin}–${o.creditMax} • ${o.selectCount} skills'),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                          'CR ${o.creditMin}–${o.creditMax} • ${o.selectCount} skills'),
+                      const SizedBox(height: 2),
+                      Text(
+                        ([...o.mandatorySkills, ...o.skillPool].join(', ')),
+                        style: Theme.of(context).textTheme.bodySmall,
+                        maxLines: 2, // optional, trim if list is long
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                   onChanged: (v) => widget.onSelected(v),
                 );
               },
@@ -432,6 +485,21 @@ class _OccupationPickerState extends State<_OccupationPicker> {
       ],
     );
   }
+}
+
+class _SpecScope extends InheritedWidget {
+  const _SpecScope({required super.child, required this.map});
+
+  final Map<String, TextEditingController> map;
+
+  static Map<String, TextEditingController> of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_SpecScope>();
+    assert(scope != null, 'No _SpecScope found in context');
+    return scope!.map;
+  }
+
+  @override
+  bool updateShouldNotify(covariant _SpecScope oldWidget) => oldWidget.map != map;
 }
 
 class _OccupationSkills extends StatelessWidget {
@@ -470,10 +538,26 @@ class _OccupationSkills extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: mandatory
-                .map((s) => FilterChip(
-                      label: Text(s),
-                      selected: true,
-                      onSelected: null, // disabled
+                .map((s) => Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        FilterChip(
+                            label: Text(s), selected: true, onSelected: null),
+                        if (_skillNeedsSpecialization(s)) ...[
+                          const SizedBox(width: 8),
+                          SizedBox(
+                            width: 160,
+                            child: TextField(
+                              controller: _SpecScope.of(context).putIfAbsent(
+                                  s, () => TextEditingController()),
+                              decoration: const InputDecoration(
+                                isDense: true,
+                                hintText: 'Specialization',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ))
                 .toList(),
           ),
@@ -487,22 +571,48 @@ class _OccupationSkills extends StatelessWidget {
           children: occupation.skillPool.map((s) {
             final isSelected = selected.contains(s);
             final canTurnOn = isSelected || !disableUnchecked;
-            return FilterChip(
-              label: Text(s),
-              selected: isSelected,
-              onSelected: canTurnOn
-                  ? (v) {
-                      final next = selected.toSet();
-                      if (v) {
-                        next.add(s);
-                      } else {
-                        next.remove(s);
-                      }
-                      // Always preserve mandatory
-                      next.addAll(mandatory);
-                      onChanged(next);
-                    }
-                  : null,
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FilterChip(
+                  label: Text(s),
+                  selected: isSelected,
+                  onSelected: canTurnOn
+                      ? (on) {
+                          final next = {...selected};
+                          if (on) {
+                            next.add(s);
+                          } else {
+                            next.remove(s);
+                          }
+                          // Always preserve mandatory
+                          next.addAll(mandatory);
+                          onChanged(next);
+                        }
+                      : null,
+                ),
+                if (isSelected && _skillNeedsSpecialization(s)) ...[
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 160,
+                    child: TextField(
+                      controller: _SpecScope.of(context)
+                          .putIfAbsent(s, () => TextEditingController()),
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        hintText: 'Specialization',
+                        ),
+                        // reflect in readiness immediately
+                        onChanged: (_) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            onChanged(
+                                selected); // triggers vm.setOccupationSkills -> notifyListeners()
+                          });
+                        }
+                    ),
+                  ),
+                ],
+              ],
             );
           }).toList(),
         ),
