@@ -27,7 +27,7 @@ class _AttributesTabState extends State<AttributesTab> {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = Provider.of<CharacterViewModel>(context, listen: false);
+    final viewModel = Provider.of<CharacterViewModel>(context, listen: true);
     final character = viewModel.character;
     final screenWidth = MediaQuery.of(context).size.width;
     final columns = (screenWidth / 300).floor().clamp(2, 4);
@@ -87,6 +87,9 @@ class _AttributesTabState extends State<AttributesTab> {
     final c = viewModel.character!;
     int p(String v, int fb) => int.tryParse(v) ?? fb;
 
+    // Show "/ max" only when NOT in draft (i.e., in active mode)
+    final showMax = !draft;
+
     return Wrap(
       spacing: 16.0,
       runSpacing: 8.0,
@@ -97,24 +100,31 @@ class _AttributesTabState extends State<AttributesTab> {
           c.maxHP,
           (val) => viewModel.updateHealth(p(val, c.currentHP), c.maxHP),
           locked: draft,
+          showMax: showMax,
         ),
         _buildStatBox(
           "Sanity",
           c.currentSanity,
           c.startingSanity,
           (val) => viewModel.updateSanity(
-              p(val, c.currentSanity), c.startingSanity),
+            p(val, c.currentSanity),
+            c.startingSanity,
+          ),
           locked: draft,
+          showMax: showMax,
         ),
         _buildStatBox(
           "Magic",
           c.currentMP,
           c.startingMP,
-          (val) =>
-              viewModel.updateMagicPoints(p(val, c.currentMP), c.startingMP),
+          (val) => viewModel.updateMagicPoints(
+            p(val, c.currentMP),
+            c.startingMP,
+          ),
           locked: draft,
+          showMax: showMax,
         ),
-        // Luck stays editable
+        // Luck stays editable, no max indicator needed
         _buildStatBox(
           "Luck",
           c.currentLuck,
