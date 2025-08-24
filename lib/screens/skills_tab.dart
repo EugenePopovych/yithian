@@ -8,6 +8,7 @@ import 'package:coc_sheet/models/creation_rule_set.dart';
 import 'package:coc_sheet/viewmodels/character_viewmodel.dart';
 import 'package:coc_sheet/widgets/stat_row.dart';
 import 'package:coc_sheet/widgets/creation_row.dart';
+import 'package:coc_sheet/screens/dice_roller_screen.dart';
 
 class SkillsTab extends StatefulWidget {
   const SkillsTab({super.key});
@@ -35,7 +36,7 @@ class _SkillsTabState extends State<SkillsTab> {
 
   @override
   Widget build(BuildContext context) {
-    final vm = Provider.of<CharacterViewModel>(context, listen: false);
+    final vm = Provider.of<CharacterViewModel>(context, listen: true);
     final character = vm.character;
 
     if (character == null) {
@@ -57,10 +58,6 @@ class _SkillsTabState extends State<SkillsTab> {
           CreationRow.skills(),
 
           const SizedBox(height: 12),
-
-          if (draft) _buildPoolLegend(context, vm),
-
-          const SizedBox(height: 8),
 
           // Layout with vertical fill ordering
           LayoutBuilder(
@@ -321,12 +318,25 @@ class _SkillsTabState extends State<SkillsTab> {
           base: skill.base,
           hard: skill.hard,
           extreme: skill.extreme,
-          onTap: () {},
+          onTap: () {
+            if (!draft) {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => DiceRollerScreen(
+                    skillName: skill.name,
+                    base: skill.base,
+                    hard: skill.base ~/ 2,
+                    extreme: skill.base ~/ 5,
+                  ),
+                ),
+              );
+            }
+          },
           controller: ctl,
           onBaseChanged: (v) {
             vm.updateSkill(skill.displayName, v);
           },
-          enabled: draft && !locked,
+          enabled: !locked,
           locked: locked,
           occupation: isOcc,
           onDelete: null,
@@ -381,24 +391,24 @@ class _SkillsTabState extends State<SkillsTab> {
     }
 
     // 3) Bottom “+ Add” row (same height as StatRow)
-    children.add(const SizedBox(height: 4));
-    children.add(
-      _AddRow(
-        label: 'Add $category',
-        enabled: draft,
-        onTap: draft
-            ? () async {
-                final spec = await _promptForSpecialization(context, category);
-                if (spec == null || spec.trim().isEmpty) return;
-                await vm.addSpecializedSkill(
-                  category: category,
-                  specialization: spec.trim(),
-                );
-                if (mounted) setState(() {});
-              }
-            : null,
-      ),
-    );
+    if (draft) {
+      children.add(const SizedBox(height: 4));
+      children.add(
+        _AddRow(
+          label: 'Add $category',
+          enabled: true,
+          onTap: () async {
+            final spec = await _promptForSpecialization(context, category);
+            if (spec == null || spec.trim().isEmpty) return;
+            await vm.addSpecializedSkill(
+              category: category,
+              specialization: spec.trim(),
+            );
+            if (mounted) setState(() {});
+          },
+        ),
+      );
+    }
 
     // 4) Whole group looks like one skill: a single thin black border, no header, no alt background
     return Container(
@@ -448,9 +458,22 @@ class _SkillsTabState extends State<SkillsTab> {
           base: skill.base,
           hard: skill.hard,
           extreme: skill.extreme,
-          onTap: () {},
           controller: ctl,
-          onBaseChanged: (_) {}, // locked; ignore edits
+                    onBaseChanged: (value) => vm.updateSkill(skill.name, value),
+          onTap: () {
+            if (!draft) {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => DiceRollerScreen(
+                    skillName: skill.name,
+                    base: skill.base,
+                    hard: skill.base ~/ 2,
+                    extreme: skill.base ~/ 5,
+                  ),
+                ),
+              );
+            }
+          },
           enabled: skill.isSpecialized,
           locked: !skill.isSpecialized,
           occupation: isOcc,
@@ -535,19 +558,6 @@ class _SkillsTabState extends State<SkillsTab> {
         color: Theme.of(context).colorScheme.errorContainer,
         textColor: Theme.of(context).colorScheme.onErrorContainer,
       ),
-    );
-  }
-
-  // Little legend at top (optional)
-  Widget _buildPoolLegend(BuildContext context, CharacterViewModel vm) {
-    final occRem = vm.occupationPointsRemaining ?? 0;
-    final perRem = vm.personalPointsRemaining ?? 0;
-    return Row(
-      children: [
-        _LegendChip(label: 'Occupation remaining: $occRem'),
-        const SizedBox(width: 8),
-        _LegendChip(label: 'Personal remaining: $perRem'),
-      ],
     );
   }
 
@@ -662,21 +672,6 @@ class _Bubble extends StatelessWidget {
         child: Text(text,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(color: fg)),
       ),
-    );
-  }
-}
-
-class _LegendChip extends StatelessWidget {
-  final String label;
-  const _LegendChip({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Chip(
-      label: Text(label),
-      visualDensity: VisualDensity.compact,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
     );
   }
 }
