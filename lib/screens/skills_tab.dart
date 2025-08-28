@@ -334,7 +334,7 @@ class _SkillsTabState extends State<SkillsTab> {
           },
           controller: ctl,
           onBaseChanged: (v) {
-            vm.updateSkill(skill.displayName, v);
+            vm.updateSkill(skill: skill, newValue: v);
           },
           enabled: !locked,
           locked: locked,
@@ -459,7 +459,7 @@ class _SkillsTabState extends State<SkillsTab> {
           hard: skill.hard,
           extreme: skill.extreme,
           controller: ctl,
-                    onBaseChanged: (value) => vm.updateSkill(skill.name, value),
+                    onBaseChanged: (value) => vm.updateSkill(skill: skill, newValue: value),
           onTap: () {
             if (!draft) {
               Navigator.of(context).push(

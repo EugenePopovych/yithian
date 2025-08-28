@@ -28,8 +28,7 @@ class FakeCharacterStorage implements CharacterStorage {
   String? _recentId;
   final _bus = StreamController<List<Character>>.broadcast();
 
-  Character? get lastStored =>
-    _recentId != null ? _db[_recentId] : null;
+  Character? get lastStored => _recentId != null ? _db[_recentId] : null;
 
   void dispose() => _bus.close();
 
@@ -173,12 +172,13 @@ void main() {
 
       // Seed pool and skill
       vm.updateAttribute('Intelligence', 40); // personal pool = 80
-      vm.character!.skills = [Skill(name: 'Spot Hidden', base: 25)];
+      final skill = Skill(name: 'Spot Hidden', base: 25);
+      vm.character!.skills = [skill];
 
       var notified = false;
       vm.addListener(() => notified = true);
 
-      vm.updateSkill('Spot Hidden', 90); // spends 65 of 80
+      vm.updateSkill(skill: skill, newValue: 90); // spends 65 of 80
 
       expect(
         vm.character!.skills.firstWhere((s) => s.name == 'Spot Hidden').base,
@@ -227,8 +227,9 @@ void main() {
       expect(vm.personalPointsRemaining, 80);
 
       // Seed skill base 25, try to raise by 95 -> should grant only 80 -> 105
-      vm.character!.skills = [Skill(name: 'Spot Hidden', base: 25)];
-      vm.updateSkill('Spot Hidden', 120);
+      final skill = Skill(name: 'Spot Hidden', base: 25);
+      vm.character!.skills = [skill];
+      vm.updateSkill(skill: skill, newValue: 120);
 
       expect(
         vm.character!.skills.firstWhere((s) => s.name == 'Spot Hidden').base,
@@ -243,9 +244,10 @@ void main() {
       await vm.createCharacter();
       vm.updateAttribute('Intelligence', 40); // establish pool
 
-      vm.character!.skills = [Skill(name: 'Cthulhu Mythos', base: 0)];
+      final skill = Skill(name: 'Cthulhu Mythos', base: 0);
+      vm.character!.skills = [skill];
 
-      vm.updateSkill('Cthulhu Mythos', 10); // should be blocked
+      vm.updateSkill(skill: skill, newValue: 10); // should be blocked
 
       expect(
         vm.character!.skills.firstWhere((s) => s.name == 'Cthulhu Mythos').base,
@@ -491,7 +493,9 @@ void main() {
   // NEW: Specialization helpers
   // -------------------------
   group('CharacterViewModel specialization helpers', () {
-    test('addSpecializedSkill creates generic family if missing and adds spec with correct base', () async {
+    test(
+        'addSpecializedSkill creates generic family if missing and adds spec with correct base',
+        () async {
       final storage = FakeCharacterStorage();
       final vm = CharacterViewModel(storage, ids: SeqIdGen());
       await vm.createCharacter();
@@ -500,53 +504,76 @@ void main() {
       vm.character!.skills = [];
 
       // Add "Science (Biology)"
-      await vm.addSpecializedSkill(category: SkillSpecialization.familyScience, specialization: 'Biology');
+      await vm.addSpecializedSkill(
+          category: SkillSpecialization.familyScience,
+          specialization: 'Biology');
 
       final skills = vm.character!.skills;
 
       // Generic "Science" exists
-      final generic = skills.firstWhere((s) => s.name == SkillSpecialization.familyScience, orElse: () => Skill(name: '!', base: -1));
+      final generic = skills.firstWhere(
+          (s) => s.name == SkillSpecialization.familyScience,
+          orElse: () => Skill(name: '!', base: -1));
       expect(generic.name, SkillSpecialization.familyScience);
       expect(generic.category, SkillSpecialization.familyScience);
       expect(generic.specialization, isNull);
-      expect(generic.base, SkillBases.baseForGeneric(SkillSpecialization.familyScience));
+      expect(generic.base,
+          SkillBases.baseForGeneric(SkillSpecialization.familyScience));
 
       // Specialized "Science (Biology)" exists with correct base
-      final specName = SkillSpecialization.displayName(SkillSpecialization.familyScience, 'Biology');
-      final bio = skills.firstWhere((s) => s.name == specName, orElse: () => Skill(name: '!', base: -1));
+      final specName = SkillSpecialization.displayName(
+          SkillSpecialization.familyScience, 'Biology');
+      final bio = skills.firstWhere((s) => s.name == specName,
+          orElse: () => Skill(name: '!', base: -1));
       expect(bio.name, specName);
       expect(bio.category, SkillSpecialization.familyScience);
       expect(bio.specialization, 'Biology');
-      expect(bio.base, SkillBases.baseForSpecialized(SkillSpecialization.familyScience, 'Biology'));
+      expect(
+          bio.base,
+          SkillBases.baseForSpecialized(
+              SkillSpecialization.familyScience, 'Biology'));
     });
 
-    test('addSpecializedSkill is idempotent (no duplicates on same spec)', () async {
+    test('addSpecializedSkill is idempotent (no duplicates on same spec)',
+        () async {
       final storage = FakeCharacterStorage();
       final vm = CharacterViewModel(storage, ids: SeqIdGen());
       await vm.createCharacter();
 
       vm.character!.skills = [];
 
-      await vm.addSpecializedSkill(category: SkillSpecialization.familyArtCraft, specialization: 'Painting');
-      await vm.addSpecializedSkill(category: SkillSpecialization.familyArtCraft, specialization: 'Painting');
+      await vm.addSpecializedSkill(
+          category: SkillSpecialization.familyArtCraft,
+          specialization: 'Painting');
+      await vm.addSpecializedSkill(
+          category: SkillSpecialization.familyArtCraft,
+          specialization: 'Painting');
 
-      final count = vm.character!.skills.where((s) => s.name == 'Art/Craft (Painting)').length;
+      final count = vm.character!.skills
+          .where((s) => s.name == 'Art/Craft (Painting)')
+          .length;
       expect(count, 1);
 
       // Generic exists exactly once too
-      final genCount = vm.character!.skills.where((s) => s.name == 'Art/Craft').length;
+      final genCount =
+          vm.character!.skills.where((s) => s.name == 'Art/Craft').length;
       expect(genCount, 1);
     });
 
-    test('removeSkillByName removes only specialization, keeps generic family', () async {
+    test('removeSkillByName removes only specialization, keeps generic family',
+        () async {
       final storage = FakeCharacterStorage();
       final vm = CharacterViewModel(storage, ids: SeqIdGen());
       await vm.createCharacter();
 
       vm.character!.skills = [];
 
-      await vm.addSpecializedSkill(category: SkillSpecialization.familyScience, specialization: 'Biology');
-      await vm.addSpecializedSkill(category: SkillSpecialization.familyScience, specialization: 'Chemistry');
+      await vm.addSpecializedSkill(
+          category: SkillSpecialization.familyScience,
+          specialization: 'Biology');
+      await vm.addSpecializedSkill(
+          category: SkillSpecialization.familyScience,
+          specialization: 'Chemistry');
 
       // Remove Biology
       await vm.removeSkillByName('Science (Biology)');
@@ -561,173 +588,251 @@ void main() {
   });
 
   group('Specialization skills — classic rules', () {
-  test('editing a generic template is forbidden in creation', () async {
-    // Arrange
-    final storage = FakeCharacterStorage();
-    final ids = SeqIdGen();
-    final vm = CharacterViewModel(storage, ids: ids);
+    test('editing a generic template is forbidden in creation', () async {
+      // Arrange
+      final storage = FakeCharacterStorage();
+      final ids = SeqIdGen();
+      final vm = CharacterViewModel(storage, ids: ids);
 
-    final occupation = Occupation(
-      id: 'gen',
-      name: 'Generalist',
-      creditMin: 0,
-      creditMax: 99,
-      selectCount: 0,
-      mandatorySkills: const [],
-      skillPool: const [],
-    );
-    final occStorage = FakeOccupationStorage(occupation);
+      final occupation = Occupation(
+        id: 'gen',
+        name: 'Generalist',
+        creditMin: 0,
+        creditMax: 99,
+        selectCount: 0,
+        mandatorySkills: const [],
+        skillPool: const [],
+      );
+      final occStorage = FakeOccupationStorage(occupation);
 
-    final attrs = <String, int>{
-      AttrKey.str: 50,
-      AttrKey.con: 50,
-      AttrKey.dex: 50,
-      AttrKey.app: 50,
-      AttrKey.pow: 50,
-      AttrKey.siz: 50,
-      AttrKey.intg: 50,
-      AttrKey.edu: 50,
-    };
+      final attrs = <String, int>{
+        AttrKey.str: 50,
+        AttrKey.con: 50,
+        AttrKey.dex: 50,
+        AttrKey.app: 50,
+        AttrKey.pow: 50,
+        AttrKey.siz: 50,
+        AttrKey.intg: 50,
+        AttrKey.edu: 50,
+      };
 
-    final spec = CreateCharacterSpec(
-      name: 'Tester',
-      age: 25,
-      attributes: attrs,
-      luck: 40,
-      occupationId: 'gen',
-      selectedSkills: const [],
-    );
+      final spec = CreateCharacterSpec(
+        name: 'Tester',
+        age: 25,
+        attributes: attrs,
+        luck: 40,
+        occupationId: 'gen',
+        selectedSkills: const [],
+      );
 
-    await vm.createFromSpec(spec, occupationStorage: occStorage);
-    await Future<void>.delayed(Duration.zero); // let initial save finish
+      await vm.createFromSpec(spec, occupationStorage: occStorage);
+      await Future<void>.delayed(Duration.zero); // let initial save finish
 
-    // Act: try to edit a LOCKED template row
-    vm.updateSkill('Science (Any)', 20);
-    await Future<void>.delayed(Duration.zero); // let save finish
+      // Act: try to edit a LOCKED template row
+      final skill = vm.character?.skills.firstWhere((s) => s.name == 'Science (Any)');
+      expect(skill, isNotNull, reason: 'Skill "Science (Any)" should exist');
+      if (skill != null) {
+        vm.updateSkill(skill: skill, newValue: 20);
+        await Future<void>.delayed(Duration.zero); // let save finish
 
-    // Assert: change rejected with a specific message
-    final evt = vm.lastCreationUpdate.value;
-    expect(evt, isNotNull);
-    expect(evt!.result.applied, isFalse);
-    expect(evt.result.messages, contains('forbidden_generic_template'));
+        // Assert: change rejected with a specific message
+        final evt = vm.lastCreationUpdate.value;
+        expect(evt, isNotNull);
+        expect(evt!.result.applied, isFalse);
+        expect(evt.result.messages, contains('forbidden_generic_template'));
 
-    // And ensure we did NOT suddenly add a 'Science (Any)' at 20
-    final c = storage.lastStored!;
-    final maybe20 = c.skills.any(
-      (sk) =>
-          (sk.displayName == 'Science (Any)' || sk.name == 'Science (Any)') &&
-          sk.base == 20,
-    );
-    expect(maybe20, isFalse);
+        // And ensure we did NOT suddenly add a 'Science (Any)' at 20
+        final c = storage.lastStored!;
+        final maybe20 = c.skills.any(
+          (sk) =>
+              (sk.displayName == 'Science (Any)' || sk.name == 'Science (Any)') &&
+              sk.base == 20,
+        );
+        expect(maybe20, isFalse);
+      }
+    });
+
+    test(
+        'specialization spends from OCCUPATION pool when its category is occupational',
+        () async {
+      // Arrange
+      final storage = FakeCharacterStorage();
+      final ids = SeqIdGen();
+      final vm = CharacterViewModel(storage, ids: ids);
+
+      // Occupation with CR min = 40 (consumes 40 OCC on replay)
+      final occupation = Occupation(
+        id: 'researcher',
+        name: 'Researcher',
+        creditMin: 40,
+        creditMax: 70,
+        selectCount: 1,
+        mandatorySkills: const [],
+        // We will pick Science as the occupational category via selectedSkills:
+        skillPool: const ['Science (Any)'],
+      );
+      final occStorage = FakeOccupationStorage(occupation);
+
+      // EDU=50 → OCC total = 200; INT=40 → PERSONAL total = 80
+      final attrs = <String, int>{
+        AttrKey.str: 40,
+        AttrKey.con: 40,
+        AttrKey.dex: 40,
+        AttrKey.app: 40,
+        AttrKey.pow: 40,
+        AttrKey.siz: 40,
+        AttrKey.intg: 40, // personal: 80
+        AttrKey.edu: 50, // occupation: 200
+      };
+
+      final spec = CreateCharacterSpec(
+        name: 'Occ Spec',
+        age: 30,
+        attributes: attrs,
+        luck: 35,
+        occupationId: 'researcher',
+        selectedSkills: const [
+          'Science (Biology)'
+        ], // treat Science category as OCC
+      );
+
+      await vm.createFromSpec(spec, occupationStorage: occStorage);
+      await Future<void>.delayed(
+          Duration.zero); // let initial save/replay finish
+
+      // Act
+      final sk1 = vm.character!.skills.firstWhere(
+        (s) =>
+            s.name == 'Science (Biology)' ||
+            s.displayName == 'Science (Biology)',
+      );
+      expect(skill, isNotNull);
+      vm.updateSkill(skill: sk1, newValue: 999);
+      await Future<void>.delayed(Duration.zero);
+
+      // Assert
+      final c1 = storage.lastStored!;
+      expect(skill(c1.skills, 'Science (Biology)'), 161);
+    });
+
+    test(
+        'specialization spends from PERSONAL pool when its category is NOT occupational',
+        () async {
+      // Arrange
+      final storage = FakeCharacterStorage();
+      final ids = SeqIdGen();
+      final vm = CharacterViewModel(storage, ids: ids);
+
+      final occupation = Occupation(
+        id: 'driver',
+        name: 'Driver',
+        creditMin: 20,
+        creditMax: 50,
+        selectCount: 0,
+        mandatorySkills: const ['Drive Auto'],
+        // NOT Science here
+        skillPool: const ['Drive Auto', 'Listen'],
+      );
+      final occStorage = FakeOccupationStorage(occupation);
+
+      // EDU=50 → OCC = 200; INT=40 → PERSONAL = 80
+      final attrs = <String, int>{
+        AttrKey.str: 40,
+        AttrKey.con: 40,
+        AttrKey.dex: 40,
+        AttrKey.app: 40,
+        AttrKey.pow: 40,
+        AttrKey.siz: 40,
+        AttrKey.intg: 40, // personal: 80
+        AttrKey.edu: 50, // occupation: 200
+      };
+
+      final spec = CreateCharacterSpec(
+        name: 'Per Spec',
+        age: 30,
+        attributes: attrs,
+        luck: 35,
+        occupationId: 'driver',
+        selectedSkills: const ['Drive Auto'], // Science not occupational
+      );
+
+      await vm.createFromSpec(spec, occupationStorage: occStorage);
+      await Future<void>.delayed(
+          Duration.zero); // let initial save/replay finish
+
+      // Add a true specialization first
+      await vm.addSpecializedSkill(
+          category: 'Science', specialization: 'Chemistry');
+      await Future<void>.delayed(Duration.zero);
+
+      // Act
+      final sk2 = vm.character!.skills.firstWhere(
+        (s) =>
+            s.name == 'Science (Chemistry)' ||
+            s.displayName == 'Science (Chemistry)',
+      );
+      vm.updateSkill(skill: sk2, newValue: 999);
+      await Future<void>.delayed(Duration.zero);
+
+      // Assert
+      final c2 = storage.lastStored!;
+      expect(skill(c2.skills, 'Science (Chemistry)'), 61);
+    });
+
+    test('specialized OCCUPATION pick spends from OCCUPATION pool', () async {
+      // Arrange
+      final storage = FakeCharacterStorage();
+      final ids = SeqIdGen();
+      final vm = CharacterViewModel(storage, ids: ids);
+
+      // Occupation has Science in its pool (as a category)
+      final occupation = Occupation(
+        id: 'researcher',
+        name: 'Researcher',
+        creditMin: 40,
+        creditMax: 70,
+        selectCount: 1,
+        mandatorySkills: const [],
+        skillPool: const ['Science (Any)'],
+      );
+
+      final attrs = <String, int>{
+        AttrKey.str: 50,
+        AttrKey.con: 50,
+        AttrKey.siz: 50,
+        AttrKey.dex: 50,
+        AttrKey.app: 50,
+        AttrKey.intg: 40, // Personal = 80
+        AttrKey.pow: 50,
+        AttrKey.edu: 50, // Occupation = 200
+      };
+
+      // Note: we select a specialized skill directly as an OCCUPATION pick
+      final spec = CreateCharacterSpec(
+        name: 'Spec Occ',
+        age: 30,
+        attributes: attrs,
+        luck: 35,
+        occupationId: 'researcher',
+        selectedSkills: const ['Science (Biology)'],
+      );
+
+      final occStorage = FakeOccupationStorage(occupation);
+      await vm.createFromSpec(spec, occupationStorage: occStorage);
+      await Future<void>.delayed(Duration.zero);
+
+      // Act
+      final sk3 = vm.character!.skills.firstWhere(
+        (s) =>
+            s.name == 'Science (Biology)' ||
+            s.displayName == 'Science (Biology)',
+      );
+      vm.updateSkill(skill: sk3, newValue: 999);
+      await Future<void>.delayed(Duration.zero);
+
+      // Assert
+      final c3 = storage.lastStored!;
+      expect(skill(c3.skills, 'Science (Biology)'), 161);
+    });
   });
-
-  test('specialization spends from OCCUPATION pool when its category is occupational', () async {
-    // Arrange
-    final storage = FakeCharacterStorage();
-    final ids = SeqIdGen();
-    final vm = CharacterViewModel(storage, ids: ids);
-
-    // Occupation with CR min = 40 (consumes 40 OCC on replay)
-    final occupation = Occupation(
-      id: 'researcher',
-      name: 'Researcher',
-      creditMin: 40,
-      creditMax: 70,
-      selectCount: 1,
-      mandatorySkills: const [],
-      // We will pick Science as the occupational category via selectedSkills:
-      skillPool: const ['Science (Any)'],
-    );
-    final occStorage = FakeOccupationStorage(occupation);
-
-    // EDU=50 → OCC total = 200; INT=40 → PERSONAL total = 80
-    final attrs = <String, int>{
-      AttrKey.str: 40,
-      AttrKey.con: 40,
-      AttrKey.dex: 40,
-      AttrKey.app: 40,
-      AttrKey.pow: 40,
-      AttrKey.siz: 40,
-      AttrKey.intg: 40, // personal: 80
-      AttrKey.edu: 50,  // occupation: 200
-    };
-
-    final spec = CreateCharacterSpec(
-      name: 'Occ Spec',
-      age: 30,
-      attributes: attrs,
-      luck: 35,
-      occupationId: 'researcher',
-      selectedSkills: const ['Science (Any)'], // treat Science category as OCC
-    );
-
-    await vm.createFromSpec(spec, occupationStorage: occStorage);
-    await Future<void>.delayed(Duration.zero); // let initial save/replay finish
-
-    // Ensure a proper specialization exists before raising its value
-    await vm.addSpecializedSkill(category: 'Science', specialization: 'Biology');
-    await Future<void>.delayed(Duration.zero);
-
-    // Act: raise specialization; should spend from OCC pool (remaining 160).
-    vm.updateSkill('Science (Biology)', 999);
-    await Future<void>.delayed(Duration.zero); // let save finish
-
-    final c = storage.lastStored!;
-    expect(skill(c.skills, 'Science (Biology)'), 161);
-  });
-
-  test('specialization spends from PERSONAL pool when its category is NOT occupational', () async {
-    // Arrange
-    final storage = FakeCharacterStorage();
-    final ids = SeqIdGen();
-    final vm = CharacterViewModel(storage, ids: ids);
-
-    final occupation = Occupation(
-      id: 'driver',
-      name: 'Driver',
-      creditMin: 20,
-      creditMax: 50,
-      selectCount: 0,
-      mandatorySkills: const ['Drive Auto'],
-      // NOT Science here
-      skillPool: const ['Drive Auto', 'Listen'],
-    );
-    final occStorage = FakeOccupationStorage(occupation);
-
-    // EDU=50 → OCC = 200; INT=40 → PERSONAL = 80
-    final attrs = <String, int>{
-      AttrKey.str: 40,
-      AttrKey.con: 40,
-      AttrKey.dex: 40,
-      AttrKey.app: 40,
-      AttrKey.pow: 40,
-      AttrKey.siz: 40,
-      AttrKey.intg: 40, // personal: 80
-      AttrKey.edu: 50,  // occupation: 200
-    };
-
-    final spec = CreateCharacterSpec(
-      name: 'Per Spec',
-      age: 30,
-      attributes: attrs,
-      luck: 35,
-      occupationId: 'driver',
-      selectedSkills: const ['Drive Auto'], // Science not occupational
-    );
-
-    await vm.createFromSpec(spec, occupationStorage: occStorage);
-    await Future<void>.delayed(Duration.zero); // let initial save/replay finish
-
-    // Add a true specialization first
-    await vm.addSpecializedSkill(category: 'Science', specialization: 'Chemistry');
-    await Future<void>.delayed(Duration.zero);
-
-    // Act: raise specialization; should spend from PERSONAL pool (80).
-    vm.updateSkill('Science (Chemistry)', 999);
-    await Future<void>.delayed(Duration.zero); // let save finish
-
-    final c = storage.lastStored!;
-    expect(skill(c.skills, 'Science (Chemistry)'), 63);
-  });
-});
 }

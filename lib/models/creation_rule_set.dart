@@ -11,10 +11,21 @@ enum ChangeTarget { attribute, skill }
 class CreationChange {
   final ChangeTarget target;
   final String name;
-  final int newBase; // absolute target value
-  const CreationChange(this.target, this.name, this.newBase);
-  const CreationChange.attribute(String name, int v) : this(ChangeTarget.attribute, name, v);
-  const CreationChange.skill(String name, int v) : this(ChangeTarget.skill, name, v);
+  final int newBase;
+  final bool? isOccupation;
+
+  const CreationChange(
+    this.target,
+    this.name,
+    this.newBase, {
+    this.isOccupation,
+  });
+
+  const CreationChange.attribute(String name, int v)
+      : this(ChangeTarget.attribute, name, v);
+
+  const CreationChange.skill(String name, int v, {bool? isOccupation})
+      : this(ChangeTarget.skill, name, v, isOccupation: isOccupation);
 }
 
 class RuleUpdateResult {

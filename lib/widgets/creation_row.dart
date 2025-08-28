@@ -196,7 +196,7 @@ class _CreationSkillsRow extends StatelessWidget {
                 final character = vm.character;
                 if (character == null) return;
                 for (final skill in character.skills) {
-                  vm.updateSkill(skill.name, skill.base + 20);
+                  vm.updateSkill(skill: skill, newValue: skill.base + 20);
                 }
               },
               child: const Text('Distribute +20 (Test)'),

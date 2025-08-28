@@ -269,13 +269,6 @@ class CharacterViewModel extends ChangeNotifier {
       personalPoints: personalPoints,
     );
 
-    // Seed for UX badges in the sheet (mandatory + user picks from pre-sheet).
-    // Tell the rules about the chosen occupation skills and initial pools
-    _rules?.seedOccupationSkills(spec.selectedSkills.toSet());
-    _rules?.seedPools(
-      occupation: (spec.attributes[AttrKey.edu] ?? 0) * 4,
-      personal:   (spec.attributes[AttrKey.intg] ?? 0) * 2,
-    );
     _rules?.seedCreditRatingRange(
       CreditRatingRange(min: occ?.creditMin ?? 0, max: occ?.creditMax ?? 0),
     );
@@ -437,14 +430,21 @@ class CharacterViewModel extends ChangeNotifier {
     saveCharacter();
   }
 
-  void updateSkill(String name, int newValue) {
+  void updateSkill({required Skill skill, required int newValue}) {
     if (_character == null) return;
 
     if (_rules != null) {
-      final res = _rules!.update(CreationChange.skill(name, newValue));
+      final res = _rules!.update(
+        CreationChange.skill(
+          skill.name, // canonical name in your model
+          newValue,
+          isOccupation: skill.isOccupation, // <-- key: tell rules which pool
+        ),
+      );
+
       final event = CreationUpdateEvent(
         target: ChangeTarget.skill,
-        name: name,
+        name: skill.name,
         attemptedValue: newValue,
         result: res,
       );
@@ -456,17 +456,17 @@ class CharacterViewModel extends ChangeNotifier {
         return; // don’t mutate model or save
       }
 
-      // Applied: update the model.
-      _character!.updateSkill(name, res.effectiveValue ?? newValue);
+      // Applied: update the model to the effective value (if clamped)
+      _character!.updateSkill(skill.name, res.effectiveValue ?? newValue);
 
-      // If there were warnings (e.g., partial due to pools), emit; else clear.
-      if ((res.messages.isNotEmpty)) {
+      // Warnings/info to UI
+      if (res.messages.isNotEmpty) {
         lastCreationUpdate.value = event;
       } else {
         lastCreationUpdate.value = null;
       }
     } else {
-      _character!.updateSkill(name, newValue);
+      _character!.updateSkill(skill.name, newValue);
     }
 
     notifyListeners();
@@ -728,6 +728,32 @@ class CharacterViewModel extends ChangeNotifier {
     // ---------- Rebind rules so they see the updated character ----------
     _setCharacterInternal(
         c); // rebinds CreationRuleSet if it's a draft; no re-initialize
+
+    // ---------- Seed occupation skills & pools ----------
+    // including specialized picks. We derive the set from the current skills list.
+    final occSeed = <String>{};
+    for (final sk in _character!.skills) {
+      if (sk.isOccupation) {
+        occSeed.add(sk.name); // e.g., "Science (Biology)"
+        if (sk.category != null) {
+          occSeed.add(sk.category!); // e.g., "Science"
+        }
+      }
+    }
+    _rules?.seedOccupationSkills(occSeed);
+
+    // Also (re)seed pools based on the EDU/INT we just applied.
+    final edu = attributes[AttrKey.edu] ?? 0;
+    final intg = attributes[AttrKey.intg] ?? 0;
+    final totalOcc = edu * 4;
+    final totalPer = intg * 2;
+
+    // We set CR base to at least creditMin above, so treat that as prior OCC spend.
+    final crIdx = _character!.skills.indexWhere((s) => s.name == 'Credit Rating');
+    final crMinApplied = crIdx >= 0 ? _character!.skills[crIdx].base : 0;
+
+    final occRemaining = (totalOcc - crMinApplied).clamp(0, totalOcc);
+    _rules?.seedPools(occupation: occRemaining, personal: totalPer);
 
     // ---------- Persist ----------
     await saveCharacter();

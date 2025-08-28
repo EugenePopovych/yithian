@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:coc_sheet/models/classic_rules.dart';
 import 'package:coc_sheet/models/creation_rule_set.dart';
 import 'package:coc_sheet/models/credit_rating_range.dart';
 import 'package:coc_sheet/models/skill.dart';
@@ -142,60 +143,12 @@ class ClassicCreationRuleSet extends CreationRuleSet with SkillPointPools {
     final dex = attr('Dexterity');
     final edu = attr('Education');
 
-    // Classic 7e fixed bases
-    final fixed = <String, int>{
-      'Accounting': 5,
-      'Anthropology': 1,
-      'Appraise': 5,
-      'Archaeology': 1,
-      'Art/Craft (Any)': 5,
-      'Charm': 15,
-      'Climb': 20,
-      'Credit Rating': 0,
-      'Cthulhu Mythos': 0,
-      'Disguise': 5,
-      'Drive Auto': 20,
-      'Electrical Repair': 10,
-      'Fast Talk': 5,
-      'Fighting (Brawl)': 25,
-      'Firearms (Handgun)': 20,
-      'Firearms (Rifle/Shotgun)': 25,
-      'First Aid': 30,
-      'History': 5,
-      'Intimidate': 15,
-      'Jump': 20,
-      'Language (Other)': 1,
-      'Law': 5,
-      'Library Use': 20,
-      'Listen': 20,
-      'Locksmith': 1,
-      'Mechanical Repair': 10,
-      'Medicine': 1,
-      'Natural World': 10,
-      'Navigate': 10,
-      'Occult': 5,
-      'Operate Heavy Machinery': 1,
-      'Persuade': 10,
-      'Pilot (Any)': 1,
-      'Psychoanalysis': 1,
-      'Psychology': 10,
-      'Ride': 5,
-      'Science (Any)': 1,
-      'Sleight of Hand': 10,
-      'Spot Hidden': 25,
-      'Stealth': 20,
-      'Survival (Any)': 10,
-      'Swim': 20,
-      'Throw': 20,
-      'Track': 10,
-    };
-
     int baseFor(Skill s) {
       final n = s.name;
       if (n == 'Dodge') return (dex / 2).floor();
       if (n == 'Language (Own)') return edu;
       final key = _templateForSkill(s);
-      return fixed[key] ?? 0; // unknown/custom → assume 0
+      return kStaticSkillBases[key] ?? 0; // unknown/custom → assume 0
     }
 
     for (final s in character.skills) {
@@ -216,7 +169,8 @@ class ClassicCreationRuleSet extends CreationRuleSet with SkillPointPools {
       // If EDU/INT changed, recompute pool totals against *effective* value.
       if (change.name == 'Education' || change.name == 'Intelligence') {
         final edu = change.name == 'Education' ? clamped : attr('Education');
-        final intel = change.name == 'Intelligence' ? clamped : attr('Intelligence');
+        final intel =
+            change.name == 'Intelligence' ? clamped : attr('Intelligence');
         setSkillPoolTotals(edu: edu, intel: intel);
       }
       return RuleUpdateResult(applied: true, effectiveValue: clamped);
@@ -227,22 +181,26 @@ class ClassicCreationRuleSet extends CreationRuleSet with SkillPointPools {
 
     // Calculated during creation: block edits
     if (lname == 'dodge' || lname == 'language (own)') {
-      return const RuleUpdateResult(applied: false, messages: ['forbidden_calculated']);
+      return const RuleUpdateResult(
+          applied: false, messages: ['forbidden_calculated']);
     }
 
     // Lock generic template rows (categories)
     if (_genericTemplates.contains(lname)) {
-      return const RuleUpdateResult(applied: false, messages: ['forbidden_generic_template']);
+      return const RuleUpdateResult(
+          applied: false, messages: ['forbidden_generic_template']);
     }
 
     // Cthulhu Mythos special rule
     if (lname == 'cthulhu mythos') {
       final cur = _skillValueForEditName(change.name);
       if (change.newBase <= cur) {
+        // CM refunds always prefer PERSONAL by design.
         refundSkill(cur - change.newBase, preferOccupation: false);
         return RuleUpdateResult(applied: true, effectiveValue: change.newBase);
       }
-      return const RuleUpdateResult(applied: false, messages: ['forbidden_cthulhu_mythos']);
+      return const RuleUpdateResult(
+          applied: false, messages: ['forbidden_cthulhu_mythos']);
     }
 
     final cur = _skillValueForEditName(change.name);
@@ -252,18 +210,22 @@ class ClassicCreationRuleSet extends CreationRuleSet with SkillPointPools {
       return RuleUpdateResult(applied: true, effectiveValue: target);
     }
 
+    // Decide pool: honor explicit flag if present, otherwise infer.
+    final bool useOccupation =
+        change.isOccupation ?? _isOccupation(change.name);
+
     if (target < cur) {
-      // Refund to pools; prefer the pool that was likely used (occupation vs personal)
-      refundSkill(cur - target, preferOccupation: _isOccupation(change.name));
+      // Refund to pools; prefer the pool that was likely used.
+      refundSkill(cur - target, preferOccupation: useOccupation);
       return RuleUpdateResult(applied: true, effectiveValue: target);
     }
 
-    // Increase: spend from the appropriate pool (resolve by category/template).
+    // Increase: spend from the chosen pool.
     final need = target - cur;
-    final occ = _isOccupation(change.name);
-    final grant = spendSkill(occ, need);
+    final grant = spendSkill(useOccupation, need);
     if (grant <= 0) {
-      return const RuleUpdateResult(applied: false, messages: ['no_points_remaining']);
+      return const RuleUpdateResult(
+          applied: false, messages: ['no_points_remaining']);
     }
 
     final eff = cur + grant;
