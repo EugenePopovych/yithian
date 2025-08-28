@@ -18,11 +18,17 @@ class HiveSkill extends HiveObject {
   @HiveField(3)
   String? specialization;
 
+  /// Whether this skill is marked as an occupation skill during creation.
+  /// Added after initial schema; defaults to false for old records.
+  @HiveField(4)
+  bool isOccupation;
+
   HiveSkill({
     required this.name,
     required this.base,
     this.category,
     this.specialization,
+    this.isOccupation = false,
   });
 
   factory HiveSkill.fromSkill(Skill s) => HiveSkill(
@@ -30,12 +36,17 @@ class HiveSkill extends HiveObject {
         base: s.base,
         category: s.category,
         specialization: s.specialization,
+        isOccupation: s.isOccupation,
       );
 
-  Skill toSkill() => Skill(
-        name: name,
-        base: base,
-        category: category,
-        specialization: specialization,
-      );
+  Skill toSkill() {
+    final sk = Skill(
+      name: name,
+      base: base,
+      category: category,
+      specialization: specialization,
+    );
+    sk.isOccupation = isOccupation;
+    return sk;
+  }
 }

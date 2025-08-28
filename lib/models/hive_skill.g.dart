@@ -21,13 +21,14 @@ class HiveSkillAdapter extends TypeAdapter<HiveSkill> {
       base: fields[1] as int,
       category: fields[2] as String?,
       specialization: fields[3] as String?,
+      isOccupation: (fields[4] as bool?) ?? false,
     );
   }
 
   @override
   void write(BinaryWriter writer, HiveSkill obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -35,7 +36,9 @@ class HiveSkillAdapter extends TypeAdapter<HiveSkill> {
       ..writeByte(2)
       ..write(obj.category)
       ..writeByte(3)
-      ..write(obj.specialization);
+      ..write(obj.specialization)
+      ..writeByte(4)
+      ..write(obj.isOccupation);
   }
 
   @override
