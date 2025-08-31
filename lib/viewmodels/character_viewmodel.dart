@@ -243,8 +243,6 @@ class CharacterViewModel extends ChangeNotifier {
     );
     final dbb = calcDamageBonus(attrs[AttrKey.str]!, attrs[AttrKey.siz]!);
 
-    final baseSkills =
-        buildBaseSkills(attrs); // includes Dodge & Language (Own)
     final occupationPoints = (attrs[AttrKey.edu] ?? 0) * 4;
     final personalPoints = (attrs[AttrKey.intg] ?? 0) * 2;
 
@@ -261,7 +259,6 @@ class CharacterViewModel extends ChangeNotifier {
       move: move,
       damageBonus: dbb.db,
       build: dbb.build,
-      baseSkills: baseSkills,
       selectedOccupationSkills: spec.selectedSkills,
       creditMin: occ?.creditMin ?? 0,
       creditMax: occ?.creditMax ?? 0,
@@ -590,7 +587,6 @@ class CharacterViewModel extends ChangeNotifier {
     required int move, // computed but not stored in Character (has a getter)
     required String damageBonus, // not stored in current Character model
     required int build, // not stored in current Character model
-    required Map<String, int> baseSkills,
     required List<String>
         selectedOccupationSkills, // not persisted in Character model
     required int creditMin, // not persisted in Character model
@@ -631,26 +627,20 @@ class CharacterViewModel extends ChangeNotifier {
     c.currentMP = mp;
 
     // ---------- Skills ----------
-    // Seed base skill values (before any spend). Keep Credit Rating at base = 0.
-    final skillsList = baseSkills.entries
-        .map((e) => Skill(name: e.key, base: e.value))
-        .toList();
-
-    // Ensure Credit Rating is present and at least the occupation minimum.
+      // Ensure Credit Rating exists and meets the minimum (do not recreate list).
     {
-      final idx = skillsList.indexWhere((s) => s.name == 'Credit Rating');
+      final idx = c.skills.indexWhere((s) => s.name == 'Credit Rating');
       if (idx >= 0) {
-        if (skillsList[idx].base < creditMin) {
-          skillsList[idx].base = creditMin; // mutable Skill.base in your model
+        if (c.skills[idx].base < creditMin) {
+          c.skills[idx].base = creditMin;
         }
       } else {
-        skillsList.add(Skill(name: 'Credit Rating', base: creditMin));
+        c.skills.add(Skill(name: 'Credit Rating', base: creditMin));
       }
     }
 
     // Sort for stable UI, then assign.
-    skillsList.sort((a, b) => a.name.compareTo(b.name));
-    c.skills = skillsList;
+    c.skills.sort((a, b) => a.displayName.compareTo(b.displayName));
 
     // --- Mark occupation skills and add specialized ones if needed ---
     for (final raw in selectedOccupationSkills) {

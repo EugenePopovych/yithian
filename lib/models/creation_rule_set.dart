@@ -5,6 +5,8 @@ import 'package:coc_sheet/models/skill.dart';
 import 'package:coc_sheet/models/sheet_status.dart';
 import 'package:coc_sheet/models/credit_rating_range.dart';
 import 'package:coc_sheet/models/classic_creation_rule_set.dart';
+import 'package:coc_sheet/models/skill_specialization.dart';
+import 'package:coc_sheet/models/skill_bases.dart';
 
 enum ChangeTarget { attribute, skill }
 
@@ -182,7 +184,6 @@ abstract class CreationRuleSet {
       'Anthropology': 1,
       'Appraise': 5,
       'Archaeology': 1,
-      'Art/Craft (Any)': 5,
       'Charm': 15,
       'Climb': 20,
       'Credit Rating': 0,
@@ -191,14 +192,10 @@ abstract class CreationRuleSet {
       'Drive Auto': 20,
       'Electrical Repair': 10,
       'Fast Talk': 5,
-      'Fighting (Brawl)': 25,
-      'Firearms (Handgun)': 20,
-      'Firearms (Rifle/Shotgun)': 25,
       'First Aid': 30,
       'History': 5,
       'Intimidate': 15,
       'Jump': 20,
-      'Language (Other)': 1,
       'Law': 5,
       'Library Use': 20,
       'Listen': 20,
@@ -210,11 +207,9 @@ abstract class CreationRuleSet {
       'Occult': 5,
       'Operate Heavy Machinery': 1,
       'Persuade': 10,
-      'Pilot (Any)': 1,
       'Psychoanalysis': 1,
       'Psychology': 10,
       'Ride': 5,
-      'Science (Any)': 1,
       'Sleight of Hand': 10,
       'Spot Hidden': 25,
       'Stealth': 20,
@@ -231,6 +226,79 @@ abstract class CreationRuleSet {
     // Dynamic-base skills
     ensureSkill('Dodge', (dex / 2).floor()); // base = DEX/2 (x5 scale)
     ensureSkill('Language (Own)', edu); // base = EDU (x5 scale)
+
+    // Generic "(Any)" rows as structured family entries
+    ensureGenericAny('Science', SkillBases.baseForGeneric('Science'));
+    ensureGenericAny('Art/Craft', SkillBases.baseForGeneric('Art/Craft'));
+    ensureGenericAny('Pilot', SkillBases.baseForGeneric('Pilot'));
+    ensureGenericAny('Survival', SkillBases.baseForGeneric('Survival'));
+    ensureGenericAny('Fighting', SkillBases.baseForGeneric('Fighting'));
+    ensureGenericAny('Firearms', SkillBases.baseForGeneric('Firearms'));
+    ensureLanguageOther();
+
+    // Specialized defaults
+    ensureSpecialized(SkillSpecialization.familyFighting, 'Brawl');
+    ensureSpecialized(SkillSpecialization.familyFirearms, 'Handguns');
+    ensureSpecialized(SkillSpecialization.familyFirearms, 'Rifle/Shotgun');
+  }
+
+  bool hasSpecialized(String family, String spec) {
+    return character.skills.any(
+      (s) => s.category == family && (s.specialization ?? '') == spec,
+    );
+  }
+
+  void ensureSpecialized(String family, String spec) {
+    if (hasSpecialized(family, spec)) return;
+
+    final base = SkillBases.baseForSpecialized(family, spec);
+    final name = SkillSpecialization.displayName(family, spec);
+    character.skills.add(
+      Skill(
+        name: name,
+        base: base,
+        category: family,
+        specialization: spec,
+      ),
+    );
+  }
+
+  // add near other helpers
+  void ensureGenericAny(String family, int base) {
+    final exists = character.skills.any(
+      (s) => s.category == family && s.specialization == null,
+    );
+    if (exists) return;
+
+    character.skills.add(
+      Skill(
+        name: '$family (Any)',
+        base: base,
+        canUpgrade: false,
+        category: family,
+        specialization: null,
+      ),
+    );
+  }
+
+  void ensureLanguageOther() {
+    final exists = character.skills.any(
+      (s) =>
+          s.category == 'Language' &&
+          s.specialization == null &&
+          s.name == 'Language (Other)',
+    );
+    if (exists) return;
+
+    character.skills.add(
+      Skill(
+        name: 'Language (Other)', // special case for the Language family
+        base: SkillBases.baseForGeneric('Language'),
+        canUpgrade: false,
+        category: 'Language',
+        specialization: null,
+      ),
+    );
   }
 }
 

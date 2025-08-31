@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:coc_sheet/models/character.dart';
 import 'package:coc_sheet/models/sheet_status.dart';
 import 'package:coc_sheet/models/create_character_spec.dart';
-import 'package:coc_sheet/models/classic_rules.dart' show AttrKey, calcHP, calcMP, calcSanity, buildBaseSkills;
+import 'package:coc_sheet/models/classic_rules.dart' show AttrKey; // ⬅️ only AttrKey now
 import 'package:coc_sheet/models/occupation.dart';
 import 'package:coc_sheet/models/attribute.dart';
 import 'package:coc_sheet/models/skill.dart';
@@ -126,11 +126,13 @@ void main() {
       selectedSkills: const ['Law', 'Psychology', 'Listen', 'Spot Hidden'],
     );
 
-    // Expected derived from helpers
-    final expectedHP = calcHP(attrs[AttrKey.con]!, attrs[AttrKey.siz]!); // (65+70)/10 = 13
-    final expectedMP = calcMP(attrs[AttrKey.pow]!);                      // 70/5 = 14
-    final expectedSanity = calcSanity(attrs[AttrKey.pow]!);              // 70
-    final expectedBaseSkills = buildBaseSkills(attrs);
+    // --- Hardcoded expected values (no helper reuse) ---
+    // HP = (CON + SIZ) / 10 = (65 + 70) / 10 = 13
+    const expectedHP = 13;
+    // MP = POW / 5 = 70 / 5 = 14
+    const expectedMP = 14;
+    // Sanity = POW = 70
+    const expectedSanity = 70;
 
     // Act
     await vm.createFromSpec(spec, occupationStorage: occStorage);
@@ -166,10 +168,14 @@ void main() {
     expect(c.currentMP, expectedMP);
 
     // Skills seeded with bases (including dynamic)
-    expect(_skill(c.skills, 'Dodge'), (attrs[AttrKey.dex]! / 2).floor());
-    expect(_skill(c.skills, 'Language (Own)'), attrs[AttrKey.edu]);
+    // Dodge base = DEX/2 = 55/2 = 27 (floor)
+    expect(_skill(c.skills, 'Dodge'), 27);
+    // Language (Own) base = EDU = 65
+    expect(_skill(c.skills, 'Language (Own)'), 65);
+    // Credit Rating at least occupation minimum
     expect(_skill(c.skills, 'Credit Rating'), occupation.creditMin);
-    expect(_skill(c.skills, 'Spot Hidden'), expectedBaseSkills['Spot Hidden']);
+    // Spot Hidden base per fixed list = 25
+    expect(_skill(c.skills, 'Spot Hidden'), 25);
 
     // Sanity after skills set (Mythos base is 0 → maxSanity 99)
     expect(c.startingSanity, expectedSanity);

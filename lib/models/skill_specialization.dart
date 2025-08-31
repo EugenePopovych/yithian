@@ -6,13 +6,15 @@ class SkillSpecialization {
   static const familyLanguageOther = 'Language (Other)';
   static const familyPilot = 'Pilot';
   static const familyFirearms = 'Firearms';
+  static const String familyFighting = 'Fighting';
 
-  static const List<String> families = <String>[
+  static const List<String> families = [
     familyArtCraft,
     familyScience,
     familyLanguageOther,
     familyPilot,
     familyFirearms,
+    familyFighting,
   ];
 
   /// Build canonical display name, e.g. "Science (Biology)".

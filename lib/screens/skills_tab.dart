@@ -23,6 +23,26 @@ class _Tile {
   const _Tile(this.child, this.weight);
 }
 
+class _FamilyBucket {
+  Skill? generic;
+  final List<Skill> specs = [];
+}
+
+class _GroupOrSolo {
+  _GroupOrSolo.group({required this.key, required this.family, required this.bucket})
+      : solo = null;
+  _GroupOrSolo.solo({required this.key, required this.solo})
+      : family = null,
+        bucket = null;
+
+  final String key;
+  final String? family;
+  final _FamilyBucket? bucket;
+  final Skill? solo;
+
+  bool get isGroup => family != null;
+}
+
 class _SkillsTabState extends State<SkillsTab> {
   final Map<String, TextEditingController> _controllers = {};
 
@@ -106,7 +126,6 @@ class _SkillsTabState extends State<SkillsTab> {
                       ),
                     ),
                   );
-
                 }),
               );
             },
@@ -122,136 +141,67 @@ class _SkillsTabState extends State<SkillsTab> {
     Character c,
     bool draft,
   ) {
-    // Families that support specializations — these render as grouped tiles.
-    const specFamilies = {
-      'Language',
-      'Science',
-      'Art/Craft',
-      'Pilot',
-      'Survival'
-    };
-
     final all = List<Skill>.from(c.skills);
 
-    bool isLegacyAnyGeneric(String name, String category) {
-      // e.g., "Science (Any)"
-      final m = RegExp(r'^(.*)\s*\(\s*Any\s*\)$').firstMatch(name);
-      if (m == null) return false;
-      final cat = m.group(1)!.trim();
-      return cat == category;
-    }
+    // Build buckets: family -> {generic, specs}
+    final byFamily = <String, _FamilyBucket>{};
+    final solos = <Skill>[];
 
-    Skill? findGenericForCategory(String category) {
-      // 1) Plain family name used as generic (e.g., "Science")
-      final plain = firstWhereOrNull(
-        all,
-        (s) => !s.isSpecialized && s.name == category,
-      );
-      if (plain != null) {
-        return plain;
-      }
-
-      // 2) Structured generic (if you ever create them that way)
-      final structured = firstWhereOrNull(
-        all,
-        (s) =>
-            !s.isSpecialized &&
-            s.category == category &&
-            s.specialization == null,
-      );
-      if (structured != null) {
-        return structured;
-      }
-
-      // 3) Legacy templates
-      if (category == 'Language') {
-        // Important: "Language (Own)" is NOT a generic template
-        final langOther = firstWhereOrNull(
-          all,
-          (s) => !s.isSpecialized && s.name == 'Language (Other)',
-        );
-        if (langOther != null) {
-          return langOther;
-        }
-      }
-
-      final legacyAny = firstWhereOrNull(
-        all,
-        (s) => !s.isSpecialized && isLegacyAnyGeneric(s.name, category),
-      );
-      return legacyAny;
-    }
-
-    List<Skill> specsFor(String category) {
-      final list = all
-          .where((s) => s.isSpecialized && s.category == category)
-          .toList()
-        ..sort((a, b) => a.displayName.compareTo(b.displayName));
-      return list;
-    }
-
-    /// Determine if a skill belongs to a specialization family and return that category.
-    /// - Specialization → its .category
-    /// - Generic (plain "Science", "Art/Craft", etc.) → that family name
-    /// - Otherwise → null
-    String? familyCategoryOf(Skill s) {
-      if (s.isSpecialized && specFamilies.contains(s.category)) {
-        return s.category!;
-      }
-      // Plain generic family names (ensure "Language (Own)" is NOT treated as family)
-      if (!s.isSpecialized &&
-          specFamilies.contains(s.name) &&
-          s.name != 'Language (Own)') {
-        return s.name;
-      }
-      return null;
-    }
-
-    // Sort alphabetically by display name for stable order.
-    final sorted = List<Skill>.from(all)
-      ..sort((a, b) => a.displayName.compareTo(b.displayName));
-
-    final consumed = <Skill>{};
-    final tiles = <_Tile>[];
-
-    for (var idx = 0; idx < sorted.length; idx++) {
-      final s = sorted[idx];
-      if (consumed.contains(s)) {
+    for (final s in all) {
+      final fam = s.category;
+      if (fam == null) {
+        solos.add(s);
         continue;
       }
+      final b = byFamily.putIfAbsent(fam, () => _FamilyBucket());
+      if (s.specialization == null) {
+        b.generic = s; // "<Family> (Any)" or "Language (Other)"
+      } else {
+        b.specs.add(s);
+      }
+    }
 
-      final family = familyCategoryOf(s);
-      if (family != null) {
-        // Build the group *here* at this alphabetical position.
-        final generic = findGenericForCategory(family);
-        final specs = specsFor(family);
+    final tiles = <_Tile>[];
 
-        if (generic == null && specs.isEmpty) {
-          continue;
-        }
+    // Prepare render entries: group entries + solo entries
+    final entries = <_GroupOrSolo>[];
 
-        if (generic != null) consumed.add(generic);
-        consumed.addAll(specs);
+    // Families → entries
+    final families = byFamily.keys.toList()..sort();
+    for (final fam in families) {
+      final bucket = byFamily[fam]!;
+      // sort specs inside the bucket for stable row order
+      bucket.specs.sort((a, b) => a.displayName.compareTo(b.displayName));
+      entries.add(_GroupOrSolo.group(key: fam, family: fam, bucket: bucket));
+    }
 
+    // Solos → entries
+    solos.sort((a, b) => a.displayName.compareTo(b.displayName));
+    for (final s in solos) {
+      entries.add(_GroupOrSolo.solo(key: s.displayName, solo: s));
+    }
+
+    // Sort groups and solos together by key (family name vs solo displayName)
+    entries.sort((a, b) => a.key.compareTo(b.key));
+
+    // Render in the unified order
+    for (final e in entries) {
+      if (e.isGroup) {
+        final b = e.bucket!;
         final tile = _buildSpecGroupTile(
           context: context,
           vm: vm,
           draft: draft,
-          category: family,
-          generic: generic, // locked row first if present
-          specs: specs, // then all specializations
+          category: e.family!,
+          generic: b.generic, // should exist due to seeding
+          specs: b.specs,
         );
-
-        // Weight ≈ number of rows: generic (if any) + specs + header(0.8)
-        final weight = (generic != null ? 1.0 : 0.0) + specs.length + 0.8;
+        final weight = (b.generic != null ? 1.0 : 0.0) + b.specs.length + 0.8;
         tiles.add(_Tile(tile, weight));
-        continue;
+      } else {
+        final s = e.solo!;
+        tiles.add(_Tile(_buildSkillRowSolo(s, vm, false, draft: draft), 1.0));
       }
-
-      // Not a family member → solo row.
-      consumed.add(s);
-      final row = _buildSkillRowSolo(s, vm, false, draft: draft);
-      tiles.add(_Tile(row, 1.0));
     }
 
     return tiles;
@@ -293,7 +243,8 @@ class _SkillsTabState extends State<SkillsTab> {
   }
 
 // A single row widget for non-grouped skills (or families without specializations yet)
-  Widget _buildSkillRowSolo(Skill skill, CharacterViewModel vm, bool? lockedSkill,
+  Widget _buildSkillRowSolo(
+      Skill skill, CharacterViewModel vm, bool? lockedSkill,
       {required bool draft}) {
     _controllers.putIfAbsent(
       skill.displayName,
@@ -307,7 +258,8 @@ class _SkillsTabState extends State<SkillsTab> {
           TextSelection.fromPosition(TextPosition(offset: ctl.text.length));
     }
 
-    final locked = lockedSkill! || isCalculatedDuringDraft(draft: draft, skillName: skill.name);
+    final locked = lockedSkill! ||
+        isCalculatedDuringDraft(draft: draft, skillName: skill.name);
     final isOcc = vm.isOccupationSkill(skill.displayName);
 
     return Stack(
@@ -459,7 +411,8 @@ class _SkillsTabState extends State<SkillsTab> {
           hard: skill.hard,
           extreme: skill.extreme,
           controller: ctl,
-                    onBaseChanged: (value) => vm.updateSkill(skill: skill, newValue: value),
+          onBaseChanged: (value) =>
+              vm.updateSkill(skill: skill, newValue: value),
           onTap: () {
             if (!draft) {
               Navigator.of(context).push(
@@ -502,8 +455,24 @@ class _SkillsTabState extends State<SkillsTab> {
             controller: controller,
             autofocus: true,
             decoration: InputDecoration(
-              hintText:
-                  category == 'Language' ? 'e.g., Latin' : 'e.g., Biology',
+              hintText: () {
+                switch (category) {
+                  case 'Language':
+                    return 'e.g., Latin';
+                  case 'Science':
+                    return 'e.g., Biology';
+                  case 'Art/Craft':
+                    return 'e.g., Painting';
+                  case 'Pilot':
+                    return 'e.g., Airplane';
+                  case 'Firearms':
+                    return 'e.g., Handguns, Rifle/Shotgun, SMG';
+                  case 'Fighting':
+                    return 'e.g., Brawl, Sword, Axe';
+                  default:
+                    return 'Enter specialization';
+                }
+              }(),
             ),
             onSubmitted: (v) => Navigator.of(ctx).pop(v.trim()),
           ),
@@ -579,7 +548,8 @@ extension on Widget {
   Widget _asBorderless() {
     if (this is! Stack) return this;
     final stack = this as Stack;
-    final base = stack.children.firstWhere((w) => w is StatRow, orElse: () => this);
+    final base =
+        stack.children.firstWhere((w) => w is StatRow, orElse: () => this);
     if (base is StatRow) {
       return Stack(
         clipBehavior: stack.clipBehavior,

@@ -9,13 +9,13 @@ class SkillBases {
   static int baseForGeneric(String family) {
     switch (family) {
       case SkillSpecialization.familyArtCraft:
-        return 5;  // Art/Craft (X) default in 7e
+        return 5; // Art/Craft (X) default in 7e
       case SkillSpecialization.familyScience:
-        return 1;  // Science (X)
+        return 1; // Science (X)
       case SkillSpecialization.familyLanguageOther:
-        return 1;  // Language (Other: X)
+        return 1; // Language (Other: X)
       case SkillSpecialization.familyPilot:
-        return 1;  // Pilot (X)
+        return 1; // Pilot (X)
       case SkillSpecialization.familyFirearms:
         // For a generic Firearms check (rare), keep conservative default.
         // Specific weapons below override via specialization.
@@ -40,20 +40,21 @@ class SkillBases {
         return 1; // Pilot (Airplane), (Boat)...
       case SkillSpecialization.familyFirearms:
         return _firearmsBase(specialization);
+      case SkillSpecialization.familyFighting:
+        // RAW: Fighting (Brawl) = 25, other Fighting weapons = 20
+        final s = specialization.trim().toLowerCase();
+        return (s == 'brawl') ? 25 : 20;
       default:
         return 1;
     }
   }
 
-  /// Common Firearms bases (CoC 7e typical defaults).
-  /// Tune as needed for your setting/edition.
-  static int _firearmsBase(String spec) {
-    final s = spec.toLowerCase().trim();
-    if (s.contains('rifle') || s.contains('shotgun')) return 25;
-    if (s.contains('handgun') || s.contains('pistol') || s.contains('revolver')) return 20;
-    if (s.contains('smg') || s.contains('submachine')) return 15;
-    if (s.contains('bow') || s.contains('crossbow')) return 15;
-    // Fallback
-    return 15;
+  /// Firearms base helper (already existed)
+  static int _firearmsBase(String specialization) {
+    final s = specialization.trim().toLowerCase();
+    if (s == 'handguns') return 20;
+    if (s == 'rifle/shotgun') return 25;
+    // Default for other firearm types (SMG, etc.)
+    return 20;
   }
 }
