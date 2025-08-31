@@ -1,12 +1,13 @@
 # Project Structure
 
-- Generated at: 2025-08-31T23:54:14.536265  
-- Generator: gen_structure.dart v0.1
+- Generated at: 2025-09-01T00:49:22.471459  
+- Generator: gen_structure.dart v0.2
 - Root: `.`
 - Scanned code: `lib`
 - Scanned docs: `docs`
+- Scanned tests: `test`
 
-> This document lists **public APIs** found under `lib/` and the available **docs**.
+> This document lists **public APIs** found under `lib/`, the **docs** index, and the discovered **tests**.
 > Private types are shown by name *(private)*; private members and generated files are skipped.
 
 ## Documentation (docs)
@@ -513,4 +514,184 @@
 - `const double kStatRowMetricWidth`
 - `const double kStatRowCellGap`
 - `const double kStatRowHeight`
+
+---
+
+## Tests
+
+### test/_test_utils/fake_asset_bundle.dart
+- **Groups:** 0
+- **Tests:** 0
+
+### test/data/occupation_storage_json_test.dart
+- **Groups:** 1
+- **Tests:** 3
+
+**Group Names**
+- OccupationStorageJson
+
+**Test Names**
+- OccupationStorageJson > bubbles up malformed occupation error (type issue)
+- OccupationStorageJson > loads v1 fixture and returns occupations
+- OccupationStorageJson > throws on version mismatch
+
+### test/models/character_model_test.dart
+- **Groups:** 1
+- **Tests:** 10
+
+**Group Names**
+- Character Model Tests
+
+**Test Names**
+- Character Model Tests > Background fields should be correctly stored and retrievable
+- Character Model Tests > Character should initialize with correct general info
+- Character Model Tests > Current HP should not exceed Max HP
+- Character Model Tests > Movement Rate should be 7 when both DEX and STR are less than SIZ
+- Character Model Tests > Movement Rate should be 8 when either DEX or STR is equal to SIZ
+- Character Model Tests > Movement Rate should be 9 when DEX and STR are greater than SIZ
+- Character Model Tests > Sanity should not exceed Max Sanity
+- Character Model Tests > SheetStatus isDraft helper works
+- Character Model Tests > Status flags should toggle correctly
+- Character Model Tests > Updating Cthulhu Mythos skill should correctly update maxSanity
+
+### test/models/classic_creation_rule_set_test.dart
+- **Groups:** 0
+- **Tests:** 6
+
+**Test Names**
+- Cthulhu Mythos cannot be increased via update()
+- attribute clamping is enforced via update()
+- classic skills are seeded with correct base values
+- initialize computes derived stats from rolled attributes
+- initialize seeds all core attributes in expected ranges
+- skill point pools are initialized from EDU and INT
+
+### test/models/classic_rules_test.dart
+- **Groups:** 4
+- **Tests:** 7
+
+**Group Names**
+- Age adjustments
+- Derived calculators
+- Roll helpers
+- Skill bases
+
+**Test Names**
+- Age adjustments > EDU checks count
+- Age adjustments > Teen rule applies EDU -5 and then checks (none for teens)
+- Derived calculators > Damage Bonus / Build bands (raw STR+SIZ)
+- Derived calculators > HP/MP/Sanity basic math
+- Derived calculators > Move & age modifiers
+- Roll helpers > Luck teen advantage takes max of two rolls
+- Skill bases > Dodge = DEX/2, Language (Own) = EDU; includes static bases
+
+### test/models/creation_rule_set_generics_test.dart
+- **Groups:** 0
+- **Tests:** 2
+
+**Test Names**
+- Generic rows are idempotent (no duplicates on reseed)
+- Seeds structured generic family rows with correct names
+
+### test/models/occupation_model_test.dart
+- **Groups:** 1
+- **Tests:** 2
+
+**Group Names**
+- Occupation.fromJson (shape matches model)
+
+**Test Names**
+- Occupation.fromJson (shape matches model) > fails when types do not match (creditMin as string)
+- Occupation.fromJson (shape matches model) > parses a valid occupation with your keys
+
+### test/models/skill_bases_test.dart
+- **Groups:** 1
+- **Tests:** 2
+
+**Group Names**
+- SkillBases.baseForSpecialized (positional args)
+
+**Test Names**
+- SkillBases.baseForSpecialized (positional args) > Fighting bases
+- SkillBases.baseForSpecialized (positional args) > Firearms bases
+
+### test/models/skill_specialization_test.dart
+- **Groups:** 0
+- **Tests:** 3
+
+**Test Names**
+- displayName & parse round-trip for Fighting (Brawl)
+- displayName & parse round-trip for Firearms (Rifle/Shotgun)
+- families include Fighting
+
+### test/viewmodels/character_viewmodel_create_from_spec_test.dart
+- **Groups:** 0
+- **Tests:** 1
+
+**Test Names**
+- createFromSpec populates Character with classic values and saves it
+
+### test/viewmodels/character_viewmodel_test.dart
+- **Groups:** 4
+- **Tests:** 18
+
+**Group Names**
+- CharacterViewModel (with rules)
+- CharacterViewModel specialization helpers
+- CharacterViewModel stream + delete
+- Specialization skills — classic rules
+
+**Test Names**
+- CharacterViewModel (with rules) > Classic: Cthulhu Mythos increase is blocked
+- CharacterViewModel (with rules) > Classic: INT drives personal points; spend partially when exceeding pool
+- CharacterViewModel (with rules) > Classic: attribute clamp to max 90
+- CharacterViewModel (with rules) > Initial character data should be correct (seeded storage)
+- CharacterViewModel (with rules) > Updating a skill should notify listeners
+- CharacterViewModel (with rules) > Updating an attribute should notify listeners
+- CharacterViewModel (with rules) > createCharacter generates id and binds classic rules
+- CharacterViewModel (with rules) > finalizeCreation respects rules (not allowed while points remain)
+- CharacterViewModel specialization helpers > addSpecializedSkill creates generic family if missing and adds spec with correct base
+- CharacterViewModel specialization helpers > addSpecializedSkill is idempotent (no duplicates on same spec)
+- CharacterViewModel specialization helpers > removeSkillByName removes only specialization, keeps generic family
+- CharacterViewModel stream + delete > charactersStream emits only non-drafts and updates on changes
+- CharacterViewModel stream + delete > deleteById removes from storage and clears current if it matches
+- Specialization skills — classic rules > editing a generic template is forbidden in creation
+- Specialization skills — classic rules > specialization spends from OCCUPATION pool when its category is occupational
+- Specialization skills — classic rules > specialization spends from PERSONAL pool when its category is NOT occupational
+- Specialization skills — classic rules > specialized OCCUPATION pick spends from OCCUPATION pool
+- init loads recent if available (drafts allowed)
+
+### test/viewmodels/create_character_view_model_test.dart
+- **Groups:** 2
+- **Tests:** 3
+
+**Group Names**
+- CreateCharacterViewModel - deterministic rolls & derived
+- CreateCharacterViewModel - occupation & skills
+
+**Test Names**
+- CreateCharacterViewModel - deterministic rolls & derived > initial roll matches seeded RNG and derived stats are correct
+- CreateCharacterViewModel - deterministic rolls & derived > teen age (17): Luck advantage applied and EDU reduced by 5
+- CreateCharacterViewModel - occupation & skills > selectOccupation seeds mandatory; setOccupationSkills clamps and validates isReadyToCreate
+
+### test/viewmodels/dice_rolling_viewmodel_test.dart
+- **Groups:** 3
+- **Tests:** 10
+
+**Group Names**
+- Ad-hoc multi-dice rolling — pool and totals
+- DiceRollingViewModel — configuration & basics
+- d100 rolls — bonus/penalty cancellation & bounds
+
+**Test Names**
+- Ad-hoc multi-dice rolling — pool and totals > 2×d6 + 1×d8 produces correct counts and ranges
+- Ad-hoc multi-dice rolling — pool and totals > d100 inside ad-hoc uses bonus/penalty cancellation and stays in 1..100
+- Ad-hoc multi-dice rolling — pool and totals > resetResults clears cached results but not the pool
+- Ad-hoc multi-dice rolling — pool and totals > rolling empty pool returns total 0 and no details
+- DiceRollingViewModel — configuration & basics > add/remove/clear dice pool works
+- DiceRollingViewModel — configuration & basics > bonus/penalty clamped to [0, 10]
+- DiceRollingViewModel — configuration & basics > initial state is adHoc with empty pool, zero bonus/penalty
+- d100 rolls — bonus/penalty cancellation & bounds > bonus and penalty cancel each other for d100
+- d100 rolls — bonus/penalty cancellation & bounds > plain d100 roll returns 1..100
+- d100 rolls — bonus/penalty cancellation & bounds > skill context can be set and used in skillD100 mode
 

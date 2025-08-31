@@ -3,6 +3,7 @@
 // Generates docs/structure.md with:
 //  1) A docs index (flat list of *file names* from /docs, recursive)
 //  2) A public-API overview of the code under lib/ (includes private type names)
+//  3) A tests overview from /test: files and discovered test/group names
 //
 // Usage:
 //   dart run tool/gen_structure.dart
@@ -10,25 +11,36 @@
 //   --out=docs/structure.md   Change output path
 //   --lib=lib                 Change scanned source dir
 //   --docs=docs               Change docs dir to scan
+//   --test=test               Change tests dir to scan
 //
 // Requirements (add as dev dependency):
 //   dart pub add --dev analyzer
+//
+// Notes:
+// - Uses analyzer to discover declarations under lib/.
+// - For tests, it parses invocation expressions and extracts names from
+//   test('...'), testWidgets('...'), and group('...') calls. It builds a flat
+//   list of test names (prefixed by containing groups) for each file.
 
 import 'dart:io';
 
 import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
 import 'package:analyzer/dart/analysis/results.dart';
-import 'package:analyzer/dart/ast/ast.dart';
+
+// Use prefixes to avoid symbol clashes between ast.dart and visitor.dart.
+import 'package:analyzer/dart/ast/ast.dart' as ast;
+
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 
-const String scriptVersion = "0.1";
+const String scriptVersion = "0.2";
 
 Future<void> main(List<String> args) async {
   final now = DateTime.now();
   final projectRoot = Directory.current.absolute.path;
   final libDir = _argValue(args, 'lib') ?? 'lib';
   final docsDir = _argValue(args, 'docs') ?? 'docs';
+  final testDir = _argValue(args, 'test') ?? 'test';
   final outPath = _argValue(args, 'out') ?? 'docs/structure.md';
 
   final libAbs = FileSystemEntity.isDirectorySync(libDir)
@@ -38,6 +50,10 @@ Future<void> main(List<String> args) async {
   final docsAbs = FileSystemEntity.isDirectorySync(docsDir)
       ? Directory(docsDir).absolute.path
       : Directory('docs').absolute.path;
+
+  final testAbs = FileSystemEntity.isDirectorySync(testDir)
+      ? Directory(testDir).absolute.path
+      : Directory('test').absolute.path;
 
   final outFile = File(outPath);
   outFile.parent.createSync(recursive: true);
@@ -60,7 +76,7 @@ Future<void> main(List<String> args) async {
   // ---------- Gather docs (filenames only, recursive, .md) ----------
   final docsIndex = _scanDocs(docsAbs);
 
-  // ---------- Analyze lib/ ----------
+  // ---------- Prepare analysis ----------
   final contexts = AnalysisContextCollection(includedPaths: [projectRoot]);
   final buffer = StringBuffer();
 
@@ -71,9 +87,12 @@ Future<void> main(List<String> args) async {
   buffer.writeln('- Root: `${_rel(projectRoot, projectRoot)}`');
   buffer.writeln('- Scanned code: `${_rel(libAbs, projectRoot)}`');
   buffer.writeln('- Scanned docs: `${_rel(docsAbs, projectRoot)}`');
+  buffer.writeln('- Scanned tests: `${_rel(testAbs, projectRoot)}`');
   buffer.writeln();
-  buffer.writeln('> This document lists **public APIs** found under `lib/` and the available **docs**.');
-  buffer.writeln('> Private types are shown by name *(private)*; private members and generated files are skipped.');
+  buffer.writeln(
+      '> This document lists **public APIs** found under `lib/`, the **docs** index, and the discovered **tests**.');
+  buffer.writeln(
+      '> Private types are shown by name *(private)*; private members and generated files are skipped.');
   buffer.writeln();
 
   // ---------- Docs Section (always shown) ----------
@@ -92,6 +111,7 @@ Future<void> main(List<String> args) async {
     buffer.writeln();
   }
 
+  // ---------- Analyze lib/ ----------
   final perFile = <String, _FileDoc>{};
   final libAbsNorm = _norm(libAbs);
 
@@ -130,7 +150,7 @@ Future<void> main(List<String> args) async {
       // Collect imports from AST
       final imports = <String>[];
       for (final d in result.unit.directives) {
-        if (d is ImportDirective) {
+        if (d is ast.ImportDirective) {
           final v = d.uri.stringValue;
           if (v != null && v.isNotEmpty) imports.add(v);
         }
@@ -178,7 +198,7 @@ Future<void> main(List<String> args) async {
       // Extensions
       for (final ex in unitElem.extensions) {
         if (_isPrivate(ex.displayName)) {
-          final onType = ex.extendedType.getDisplayString(withNullability: true);
+          final onType = ex.extendedType.getDisplayString();
           final name = ex.displayName.isEmpty ? '(unnamed)' : ex.displayName;
           doc.extensions.add('`extension $name on $onType` *(private)*');
         } else {
@@ -207,7 +227,10 @@ Future<void> main(List<String> args) async {
     }
   }
 
-  // Index
+  // ---------- Analyze tests/ ----------
+  final tests = await _scanTests(contexts, testAbs, projectRoot);
+
+  // ---------- Index ----------
   final filesSorted = perFile.keys.toList()..sort();
   buffer.writeln('## Index');
   buffer.writeln();
@@ -216,7 +239,7 @@ Future<void> main(List<String> args) async {
   }
   buffer.writeln();
 
-  // Per-file sections
+  // ---------- Per-file sections (lib) ----------
   for (final f in filesSorted) {
     final doc = perFile[f]!;
     buffer.writeln('---');
@@ -249,13 +272,49 @@ Future<void> main(List<String> args) async {
     emitList('Top-level Variables', doc.variables);
   }
 
+  // ---------- Tests section ----------
+  buffer.writeln('---');
+  buffer.writeln();
+  buffer.writeln('## Tests');
+  buffer.writeln();
+  if (!tests.exists) {
+    buffer.writeln('_No `test/` directory found._');
+  } else if (tests.files.isEmpty) {
+    buffer.writeln('_No Dart test files were found under `test/`._');
+  } else {
+    for (final tf in tests.files) {
+      buffer.writeln('### ${tf.relativePath}');
+      buffer.writeln('- **Groups:** ${tf.groups.length}');
+      buffer.writeln('- **Tests:** ${tf.tests.length}');
+      if (tf.groups.isNotEmpty) {
+        buffer.writeln();
+        buffer.writeln('**Group Names**');
+        for (final g in tf.groups..sort()) {
+          buffer.writeln('- $g');
+        }
+      }
+      if (tf.tests.isNotEmpty) {
+        buffer.writeln();
+        buffer.writeln('**Test Names**');
+        for (final t in tf.tests..sort()) {
+          buffer.writeln('- $t');
+        }
+      }
+      buffer.writeln();
+    }
+  }
+
   await outFile.writeAsString(buffer.toString());
   final totalFiles = filesSorted.length;
   final totalClasses =
       perFile.values.fold<int>(0, (a, b) => a + b.classes.length);
   final totalEnums = perFile.values.fold<int>(0, (a, b) => a + b.enums.length);
+  final totalTestFiles = tests.files.length;
+  final totalTestCount =
+      tests.files.fold<int>(0, (a, b) => a + b.tests.length);
+
   stdout.writeln(
-      'Wrote ${_rel(outFile.path, projectRoot)}  (files: $totalFiles, classes: $totalClasses, enums: $totalEnums)');
+      'Wrote ${_rel(outFile.path, projectRoot)}  (lib files: $totalFiles, classes: $totalClasses, enums: $totalEnums; test files: $totalTestFiles, tests: $totalTestCount)');
 }
 
 // ---------- Docs scanning (recursive, filenames only) ----------
@@ -312,9 +371,8 @@ class _FileDoc {
 // ----- Formatting helpers for PUBLIC members/types -----
 
 String _typeAliasSig(TypeAliasElement e) {
-  final DartType? aliased = e.aliasedType;
-  final aliasedStr =
-      aliased?.getDisplayString(withNullability: true) ?? 'dynamic';
+  final DartType aliased = e.aliasedType;
+  final aliasedStr = aliased.getDisplayString();
   return '`typedef ${e.displayName} = $aliasedStr`';
 }
 
@@ -358,7 +416,7 @@ String _mixinInfo(MixinElement e) {
 }
 
 String _extensionInfo(ExtensionElement e) {
-  final onType = e.extendedType.getDisplayString(withNullability: true);
+  final onType = e.extendedType.getDisplayString();
   final methods = e.methods
       .where((m) => !_isPrivate(m.displayName))
       .map((m) => _methodSig(m))
@@ -426,7 +484,7 @@ String _ctorSig(String className, ConstructorElement k) {
 }
 
 String _methodSig(MethodElement m) {
-  final ret = m.returnType.getDisplayString(withNullability: true);
+  final ret = m.returnType.getDisplayString();
   final params = _formatParams(m.parameters);
   final prefix = <String>[];
   if (m.isStatic) prefix.add('static');
@@ -435,7 +493,7 @@ String _methodSig(MethodElement m) {
 }
 
 String _accessorSig(PropertyAccessorElement a) {
-  final type = a.returnType.getDisplayString(withNullability: true);
+  final type = a.returnType.getDisplayString();
   final name = a.displayName;
   final prefix = <String>[];
   if (a.isStatic) prefix.add('static');
@@ -444,7 +502,7 @@ String _accessorSig(PropertyAccessorElement a) {
     return '`$pre$type get $name`';
   } else {
     final params = a.parameters
-        .map((p) => '${p.type.getDisplayString(withNullability: true)} ${p.displayName}')
+        .map((p) => '${p.type.getDisplayString()} ${p.displayName}')
         .join(', ');
     final pre = prefix.isEmpty ? '' : '${prefix.join(' ')} ';
     return '`$pre set $name($params)`';
@@ -452,7 +510,7 @@ String _accessorSig(PropertyAccessorElement a) {
 }
 
 String _fieldSig(FieldElement f) {
-  final type = f.type.getDisplayString(withNullability: true);
+  final type = f.type.getDisplayString();
   final name = f.displayName;
   final mods = <String>[];
   if (f.isStatic) mods.add('static');
@@ -466,7 +524,7 @@ String _fieldSig(FieldElement f) {
 }
 
 String _functionSig(FunctionElement fn) {
-  final ret = fn.returnType.getDisplayString(withNullability: true);
+  final ret = fn.returnType.getDisplayString();
   final name = fn.displayName;
   final params = _formatParams(fn.parameters);
   final mods = <String>[];
@@ -476,7 +534,7 @@ String _functionSig(FunctionElement fn) {
 }
 
 String _variableSig(VariableElement v) {
-  final type = v.type.getDisplayString(withNullability: true);
+  final type = v.type.getDisplayString();
   final name = v.displayName;
   final mods = <String>[];
   if (v.isConst) {
@@ -495,7 +553,7 @@ String _formatParams(List<ParameterElement> params) {
   final named = <String>[];
 
   for (final p in params) {
-    final t = p.type.getDisplayString(withNullability: true);
+    final t = p.type.getDisplayString();
     final def = p.defaultValueCode;
     final defStr = def == null ? '' : ' = $def';
     final req = p.isRequiredNamed || p.isRequiredPositional ? 'required ' : '';
@@ -519,7 +577,150 @@ String _formatParams(List<ParameterElement> params) {
   return parts.join(', ');
 }
 
-// ---------- Shared path helpers ----------
+// ---------- Tests scanning ----------
+
+class _TestsIndex {
+  final List<_TestFile> files;
+  final bool exists;
+  _TestsIndex({required this.files, required this.exists});
+}
+
+class _TestFile {
+  final String relativePath;
+  final List<String> groups; // flattened group names
+  final List<String> tests; // full names incl. group prefixes
+  _TestFile({
+    required this.relativePath,
+    required this.groups,
+    required this.tests,
+  });
+}
+
+Future<_TestsIndex> _scanTests(
+  AnalysisContextCollection contexts,
+  String testAbs,
+  String projectRoot,
+) async {
+  final exists = Directory(testAbs).existsSync();
+  if (!exists) return _TestsIndex(files: const [], exists: false);
+
+  final testAbsNorm = _norm(testAbs);
+  final out = <_TestFile>[];
+
+  for (final ctx in contexts.contexts) {
+    final session = ctx.currentSession;
+
+    final files = ctx.contextRoot.analyzedFiles().where((raw) {
+      final pFs = _toFsPath(raw);
+      final isDart = pFs.endsWith('.dart');
+      final isUnderTest = _underDir(pFs, testAbsNorm);
+      return isDart && isUnderTest;
+    }).toList()
+      ..sort();
+
+    for (final raw in files) {
+      final path = _toFsPath(raw);
+      final res = await session.getResolvedUnit(path);
+      if (res is! ResolvedUnitResult) continue;
+
+      final rel = _rel(path, projectRoot);
+      final names = _extractTests(res.unit);
+      out.add(_TestFile(
+        relativePath: rel,
+        groups: names.groups.toList()..sort(),
+        tests: names.tests.toList()..sort(),
+      ));
+    }
+  }
+
+  out.sort((a, b) => a.relativePath.compareTo(b.relativePath));
+  return _TestsIndex(files: out, exists: true);
+}
+
+class _CollectedTests {
+  final Set<String> groups = {};
+  final Set<String> tests = {};
+}
+
+_CollectedTests _extractTests(ast.CompilationUnit unit) {
+  final collected = _CollectedTests();
+  final groupStack = <String>[];
+
+  String? stringArgOf(ast.ArgumentList args, int index) {
+    if (index >= args.arguments.length) return null;
+    final arg = args.arguments[index];
+    if (arg is ast.SimpleStringLiteral) return arg.stringValue;
+    if (arg is ast.AdjacentStrings) {
+      // Join adjacent string literals if present
+      final sb = StringBuffer();
+      for (final s in arg.strings) {
+        if (s is ast.SimpleStringLiteral) sb.write(s.stringValue);
+      }
+      return sb.isEmpty ? null : sb.toString();
+    }
+    return null;
+  }
+
+  void visitNode(ast.AstNode node) {
+    if (node is ast.InvocationExpression) {
+      final name = () {
+        final f = node.function;
+        if (f is ast.SimpleIdentifier) return f.name;
+        if (f is ast.PrefixedIdentifier) return f.identifier.name;
+        if (f is ast.PropertyAccess) return f.propertyName.name;
+        return null;
+      }();
+
+      if (name == 'group') {
+        final groupName = stringArgOf(node.argumentList, 0);
+        if (groupName != null && groupName.isNotEmpty) {
+          collected.groups.add(_fullName(groupStack, groupName));
+          // Enter the group
+          groupStack.add(groupName);
+
+          // Visit only the group's callback body (2nd arg), then pop.
+          if (node.argumentList.arguments.length >= 2) {
+            final cb = node.argumentList.arguments[1];
+            ast.AstNode? body;
+            if (cb is ast.FunctionExpression) {
+              body = cb.body;
+            } else if (cb is ast.MethodInvocation) {
+              body = cb.argumentList; // very uncommon but safe
+            }
+            if (body != null) {
+              // Recurse inside the group body only.
+              body.childEntities.whereType<ast.AstNode>().forEach(visitNode);
+            }
+          }
+
+          // Exit the group safely.
+          if (groupStack.isNotEmpty) {
+            groupStack.removeLast();
+          }
+          return; // do not fall through to generic traversal for this node
+        }
+      } else if (name == 'test' || name == 'testWidgets') {
+        final testName = stringArgOf(node.argumentList, 0);
+        if (testName != null && testName.isNotEmpty) {
+          collected.tests.add(_fullName(groupStack, testName));
+        }
+      }
+    }
+
+    // Generic traversal
+    node.childEntities.whereType<ast.AstNode>().forEach(visitNode);
+  }
+
+  visitNode(unit);
+  return collected;
+}
+
+String _fullName(List<String> groups, String name) {
+  if (groups.isEmpty) return name;
+  return '${groups.join(" > ")} > $name';
+}
+
+// ---------- Shared path/helpers ----------
 
 bool _isPrivate(String name) => name.startsWith('_');
 
