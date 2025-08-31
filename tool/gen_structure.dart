@@ -113,7 +113,6 @@ Future<void> main(List<String> args) async {
       if (result is! ResolvedUnitResult) continue;
 
       final lib = result.libraryElement;
-      if (lib == null) continue;
 
       // Get the unit element for this file.
       CompilationUnitElement? unitElem = result.unit.declaredElement;

@@ -1,6 +1,6 @@
 # Project Structure
 
-- Generated at: 2025-08-30T16:53:03.888389  
+- Generated at: 2025-08-31T23:54:14.536265  
 - Generator: gen_structure.dart v0.1
 - Root: `.`
 - Scanned code: `lib`
@@ -14,7 +14,11 @@
 - project.md
 - roadmap.md
 - structure.md
+- task_YIT-001-fighting-firearms-as-families.md
+- task_YIT-002_refactor-categories-for-skills.md
 - workflow.md
+- yit-001 fighting-firearms-as-families.md
+- yit-002 refactor categories for skills.md
 
 ## Index
 
@@ -131,7 +135,7 @@
 ---
 
 ## models/creation_rule_set.dart
-- **Imports (7):** `package:meta/meta.dart`, `package:coc_sheet/models/character.dart`, `package:coc_sheet/models/attribute.dart`, `package:coc_sheet/models/skill.dart`, `package:coc_sheet/models/sheet_status.dart`, `package:coc_sheet/models/credit_rating_range.dart`, `package:coc_sheet/models/classic_creation_rule_set.dart`
+- **Imports (9):** `package:meta/meta.dart`, `package:coc_sheet/models/character.dart`, `package:coc_sheet/models/attribute.dart`, `package:coc_sheet/models/skill.dart`, `package:coc_sheet/models/sheet_status.dart`, `package:coc_sheet/models/credit_rating_range.dart`, `package:coc_sheet/models/classic_creation_rule_set.dart`, `package:coc_sheet/models/skill_specialization.dart`, `package:coc_sheet/models/skill_bases.dart`
 
 ### Enums
 - `enum ChangeTarget` — values: `attribute`, `skill`
@@ -143,7 +147,7 @@
 - `class CreationChange` — ctors: `const CreationChange(required ChangeTarget target, required String name, required int newBase, {bool? isOccupation})`; `const CreationChange.attribute(required String name, required int v)`; `const CreationChange.skill(required String name, required int v, {bool? isOccupation})` — fields: `final ChangeTarget target`; `final String name`; `final int newBase`; `final bool? isOccupation`
 - `class RuleUpdateResult` — ctors: `const RuleUpdateResult({required bool applied, int? effectiveValue, List<String> messages = const []})` — fields: `final bool applied`; `final int? effectiveValue`; `final List<String> messages`
 - `class PointPool` — ctors: `PointPool({required int total, int spent = 0})` — fields: `int total`; `int spent`; `int remaining` — accessors: `int get remaining` — methods: `int spend(required int want)`; `int refund(required int pts)`
-- `class CreationRuleSet` — ctors: `CreationRuleSet()` — fields: `Character character`; `String id`; `String label`; `int? attributePointsRemaining`; `int? occupationPointsRemaining`; `int? personalPointsRemaining`; `bool canFinalize`; `CreditRatingRange? creditRatingRange` — accessors: `String get id`; `String get label`; `int? get attributePointsRemaining`; `int? get occupationPointsRemaining`; `int? get personalPointsRemaining`; `bool get canFinalize`; `CreditRatingRange? get creditRatingRange` — methods: `bool isOccupationSkill(required String name)`; `void seedOccupationSkills(required Set<String> skills)`; `void seedPools({required int occupation, required int personal})`; `void bind(required Character c)`; `void onEnter()`; `void onExit()`; `void initialize({String? sheetName, String? name, String? occupation})`; `RuleUpdateResult update(required CreationChange change)`; `void rollAttributes()`; `void rollSkills()`; `void seedCreditRatingRange(required CreditRatingRange range)`; `void finalizeDraft()`; `void ensureAttr(required String n)`; `void ensureSkill(required String name, required int base)`; `int attr(required String name)`; `int skill(required String name)`; `void seedClassicSkills()`
+- `class CreationRuleSet` — ctors: `CreationRuleSet()` — fields: `Character character`; `String id`; `String label`; `int? attributePointsRemaining`; `int? occupationPointsRemaining`; `int? personalPointsRemaining`; `bool canFinalize`; `CreditRatingRange? creditRatingRange` — accessors: `String get id`; `String get label`; `int? get attributePointsRemaining`; `int? get occupationPointsRemaining`; `int? get personalPointsRemaining`; `bool get canFinalize`; `CreditRatingRange? get creditRatingRange` — methods: `bool isOccupationSkill(required String name)`; `void seedOccupationSkills(required Set<String> skills)`; `void seedPools({required int occupation, required int personal})`; `void bind(required Character c)`; `void onEnter()`; `void onExit()`; `void initialize({String? sheetName, String? name, String? occupation})`; `RuleUpdateResult update(required CreationChange change)`; `void rollAttributes()`; `void rollSkills()`; `void seedCreditRatingRange(required CreditRatingRange range)`; `void finalizeDraft()`; `void ensureAttr(required String n)`; `void ensureSkill(required String name, required int base)`; `int attr(required String name)`; `int skill(required String name)`; `void seedClassicSkills()`; `bool hasSpecialized(required String family, required String spec)`; `void ensureSpecialized(required String family, required String spec)`; `void ensureGenericAny(required String family, required int base)`; `void ensureLanguageOther()`
 - `class CreationRules` — ctors: `CreationRules()` — methods: `static CreationRuleSet forStatus(required SheetStatus status)`
 
 ---
@@ -222,7 +226,7 @@
 ## models/skill_specialization.dart
 
 ### Classes
-- `class SkillSpecialization` — ctors: `SkillSpecialization()` — fields: `static const String familyArtCraft`; `static const String familyScience`; `static const String familyLanguageOther`; `static const String familyPilot`; `static const String familyFirearms`; `static const List<String> families` — methods: `static String displayName(required String category, required String specialization)`; `static ({String? category, String? specialization}) parse(required String skillName)`; `static bool isOfFamily(required String skillName, required String family)`; `static bool isGenericFamily(required String skillName)`
+- `class SkillSpecialization` — ctors: `SkillSpecialization()` — fields: `static const String familyArtCraft`; `static const String familyScience`; `static const String familyLanguageOther`; `static const String familyPilot`; `static const String familyFirearms`; `static const String familyFighting`; `static const List<String> families` — methods: `static String displayName(required String category, required String specialization)`; `static ({String? category, String? specialization}) parse(required String skillName)`; `static bool isOfFamily(required String skillName, required String family)`; `static bool isGenericFamily(required String skillName)`
 
 ---
 
@@ -345,6 +349,8 @@
 ### Classes
 - `class SkillsTab` — ctors: `const SkillsTab({Key? key})` — methods: `State<SkillsTab> createState()`
 - `class _Tile` *(private)*
+- `class _FamilyBucket` *(private)*
+- `class _GroupOrSolo` *(private)*
 - `class _SkillsTabState` *(private)*
 - `class _AddRow` *(private)*
 - `class _Bubble` *(private)*

@@ -102,8 +102,6 @@ Source code is located in public repository https://github.com/EugenePopovych/yi
 ## 8) Coding Standards
 
 - **Imports:** Use `package:coc_sheet/...` absolute imports; avoid relative `..` imports except within same small module when justified.
-- **Derived fields:** Keep **calculated values locked** in normal mode; only editable in creation where rules allow.
-- **Mutations:** Go through ViewModels (`CharacterViewModel.update*`, `CreateCharacterViewModel.*`) rather than mutating models in widgets.
 - **Nullability:** Prefer non‑nullable with required parameters; explicit optionals.
 - **Names:** Kebab‑case for files, UpperCamel for types, lowerCamel for members; private fields start with \_, private functions don't start with \_.
 - **No placeholders:** If code context is missing, request the exact files before writing changes.
@@ -114,11 +112,12 @@ Source code is located in public repository https://github.com/EugenePopovych/yi
 
 - **Where:** `test/**` for unit and widget tests.
 - **Focus areas:**
-  - Rule math (HP/MP/Sanity/Move, damage bonus) including edge ages.
-  - Creation flows: pools spending/refund, occupation skills, finalize draft.
-  - ViewModel actions: character create/load/save/delete; dice roll behaviors.
-- **Style:** Deterministic tests (seed RNG where used); avoid time‑based flakiness.
-- **Reference objects** directly (not by name strings) when applicable.
+  - public interfaces of model and viewmodel classes
+  - correct CoC 7ed rules implementation
+- **Style:**
+  - Deterministic tests (seed RNG where used);
+  - avoid time‑based flakiness.
+  - Don't implement the rules logic in the tests. Use static hardcoded expected values instead (but put the rules in comments to explain these expected values).
 
 ---
 

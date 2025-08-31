@@ -11,11 +11,36 @@ The items are listed in the order of priority for the project, descending.
 
 ---
 
+## Bugs to fix
+
+- Don't replay skill values on character creation to calculate proper pool size. Just store current and maximum pool size.
+
+- Language (Own) is not set correctly.
+  Context: Language (Own) is supposed to be equal to EDU. Instead currently it is less than EDU. The unit test fails
+
+---
+
+## Refactoring
+
+- Clean up unit tests
+  Context: by design the unit tests have to be isolated, fast, repeateble, self-validating, understandable. They have to test public interfaces, not internal logic. Current unit tests in the project were created sporadically, often with violation of these requirements. We have to analyze all the unit tests currently written, clean them up, add missing tests and remove suspisious. It is expected that we will need to refactor the actual source code to make it more testable.
+
+- Clean up objects creation
+  Context: Creation of the Character is a bit messy right now. We have CreationRuleSet, CreateCharacterSpec, ClassicRules, CharacterViewmodel.createCharacter and maybe something else. These classes have their constructors, creation methods, initializers, there's createFromSpec function and applyClassicToCurrentCharacter etc. Some information is copied between these entities. Some information is created several times and gets rewritten. The sorting is called several times. This mess has to be cleaned up. We have to define a clear algorithm of character creation and separate concerns between different classes allowing the following:
+    - creates empty character with default values (including attributes and default skills) - state Empty
+    - applies values from method creation interface (Classic, Point-Buy, Freestyle) - state changes to Draft
+    - updates values from draft UI (currently called Creation UI in CharacterSheetScreen) - state changes to Active after finalization
+    - supports changes during the game 
+    - allows edits during the game (like adding new skills)
+  Notes: use TDD approach for this task - after deciding on the approach start with writing unit tests that reproduce the usage of each class separately, then implement this class so that the written test passes.
+
+---
+
 ## Must Have
-- Turn Fighting and Firearms into categories of specialized skills
-    Context: Currently we have Fighting (Brawl), Firearms (Handguns) and Firearms (Rifle/Shotgun) as separate skills without possibilities to add more specializations. Let's make them categories like "Art/Craft", "Science", "Language". 
-    Status: planned
-    Notes: No need to update or improve the current logic of specialization skills, it will be changed later in scope of Custom Skills feature. Make sure that skills Fighting (Brawl), Firearms (Handguns) and Firearms (Rifle/Shotgun) are added automatically.
+- Custom skills
+  Context: to provide max flexibility and to comply with popular practices we have to allow user to create their own skills at any time.
+  Notes: the more I think about it the more I understand that specialized skills are just custom skills. This could make the whole system a bit easier. In scope of this feature we have to refactor all the skills to simplify specialized skills.
+  Status: planned
 
 - Freestyle Creation Method
   Context: the user should be able to create a character using free rules similar to dholehouse.com Freestyle method
@@ -71,11 +96,6 @@ The items are listed in the order of priority for the project, descending.
   Context: there are several ideas how to improve the UI:
     - change cursor and add other visual highltghts to the clickable elements like skills.
   Status: planned
-
-- Custom skills
-  Context: to provide max flexibility and to comply with popular practices we have to allow user to create their own skills at any time.
-  Notes: the more I think about it the more I understand that specialized skills are just custom skills. This could make the whole system a bit easier.
-  Status: proposed
 
 - Training checkbox for skills
   Context: as a user I want to mark my skills as Available For Training. I may also want to set it automatically when the skill is tested successfully.
@@ -140,4 +160,8 @@ The items are listed in the order of priority for the project, descending.
 ---
 
 ## Completed
-- [x] Finished Feature (with link to design/task).  
+- Turn Fighting and Firearms into categories of specialized skills
+    Context: Currently we have Fighting (Brawl), Firearms (Handguns) and Firearms (Rifle/Shotgun) as separate skills without possibilities to add more specializations. Let's make them categories like "Art/Craft", "Science", "Language". 
+    Status: planned
+    Notes: No need to update or improve the current logic of specialization skills, it will be changed later in scope of Custom Skills feature. Make sure that skills Fighting (Brawl), Firearms (Handguns) and Firearms (Rifle/Shotgun) are added automatically.
+    Links: YIT-001, YIT-002, task_YIT-001-fighting-firearms-as-families, task_YIT-002_refactor-categories-for-skills
